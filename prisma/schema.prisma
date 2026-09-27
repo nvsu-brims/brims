@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// NVSU-BRIMS data schema. Ported from prisma-contract.prisma (Prisma 8
+// "contract" pattern) to standard Prisma 7 for Step 12/13 of SCAFFOLD-LOG.md.
+//
+// Not models on purpose: colleges / organizations. They stay in
+// data/colleges.ts and User stores their CODES (validate the pair with
+// isValidCollegeOrganization()).
+//
+// RLS NOTE: the Prisma 8 contract used `@@rls` on every model because
+// Supabase turns row-level security ON for every new table, and the
+// contract had to declare that or `db init` would fail its final check.
+// Standard Prisma 7 has no `@@rls` directive, so it is dropped here on all
+// four models. This does NOT disable RLS in Supabase itself — it only means
+// Prisma no longer manages/declares it. How RLS policies get authored going
+// forward (raw SQL migrations, the Supabase dashboard, or deferred
+// entirely) is still an OPEN DECISION per Step 12/13's checklist — not
+// resolved by this file. The app's own Prisma connection (postgres role)
+// is unaffected either way; this only affects Supabase's public Data API.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// ENUM NOTE: the live Supabase DB stores these as plain `text` columns with
+// CHECK constraints, not native Postgres enum types (confirmed via
+// `npx prisma db pull --print`). Prisma `enum` blocks generate native
+// Postgres enums, which `db push` refused to apply against existing data
+// (P schema-drift error on entity_type/category/office; the same mismatch
+// would eventually hit role/status/action too). Converted every
+// enum-backed field below to `String` to match the live DB exactly — the
+// valid-value lists are kept here as reference comments only; validity is
+// still enforced by Postgres's own CHECK constraints, just not by Prisma's
+// type system. See SCAFFOLD-LOG.md's Step 12 notes for the `db push`
+// error this fixes.
+//
+// Role: borrower | admin
+// Office: sports_dev | culture_arts
+// SignUpStatus: pending | approved | rejected
+// ItemCategory: sports_dev_items_equipment | culture_arts_items_equipment
+//   (DB-6: collapsed from 3 legacy PHP values to these 2; office determines
+//   category 1:1 in every seeded row)
+// ItemStatus: available | borrowed | unavailable
+// BorrowStatus: pending | approved | rejected | borrowed | returned |
+//   overdue | cancelled
+// EntityType: item | borrow_record | user | auth
+// ActivityAction: item_added | item_renamed | item_deleted |
+//   item_status_changed | item_image_changed | item_bulk_deleted |
+//   account_created | account_updated |
+//   account_deactivated | account_reactivated | account_signed_up |
+//   account_approved | account_rejected | password_reset_by_admin |
+//   password_changed_by_self | borrow_approved | borrow_rejected |
+//   borrow_requested | borrow_cancelled | borrow_returned |
+//   sign_in_success | sign_in_failed | sign_out | item_overdue_reminder |
+//   email_send_failed | email_recovered | cross_office_action_blocked |
+//   unauthorized_page_access
+// ---------------------------------------------------------------------------
+
+model User {
+  id            Int           @id @default(autoincrement())
+  idNumber      String        @unique @map("id_number")
+  firstName     String        @map("first_name")
+  lastName      String        @map("last_name")
+  role          String        @default("borrower")
+  // Admins only: null = super admin. Always null for borrowers.
+  office        String?
+  // College / organization CODES from data/colleges.ts (null for admins).
+  college       String?
+  organization  String?
+  email         String?       @unique
+  contactNumber String?       @unique @map("contact_number")
+  // The MySQL default was 'approved'; the sign-up action sets 'pending' explicitly.
+  signUpStatus  String        @default("approved") @map("sign_up_status")
+  // bcrypt hash, never the plain-text password the PHP stored.
+  passwordHash  String        @map("password_hash")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  // Soft delete: a non-null value means the account is deactivated.
+  deletedAt     DateTime?     @map("deleted_at")
+  // Session revocation marker (BUG-02). The session JWT carries the value it
+  // was issued with, and getSession() rejects a token whose value no longer
+  // matches this column. Bumped by password change, admin password reset,
+  // deactivation and sign-out, so every token issued before that moment stops
+  // working. A dedicated column on purpose: updatedAt also moves on unrelated
+  // edits, which would sign people out for no reason.
+  sessionVersion Int          @default(0) @map("session_version")
+
+  borrowRecords   BorrowRecord[] @relation("BorrowRequester")
+  approvedRecords BorrowRecord[] @relation("BorrowApprover")
+  activityLogs    ActivityLog[]
+
+  @@map("users")
+}
+
+model InventoryItem {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  // Object storage URL (was a local relative path in the PHP).
+  image       String?
+  category    String
+  office      String
+  status      String      @default("available")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  borrowRecords BorrowRecord[]
+
+  @@map("inventory_items")
+}
+
+model BorrowRecord {
+  id                 Int           @id @default(autoincrement())
+  userId             Int           @map("user_id")
+  itemId             Int           @map("item_id")
+  status             String        @default("pending")
+  requestedAt        DateTime      @default(now()) @map("requested_at")
+  // Date only (no time).
+  expectedReturnDate DateTime?     @db.Date @map("expected_return_date")
+  dueAt              DateTime?     @map("due_at")
+  approvedAt         DateTime?     @map("approved_at")
+  approvedById       Int?          @map("approved_by_id")
+  returnedAt         DateTime?     @map("returned_at")
+  remarks            String?
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  user       User          @relation("BorrowRequester", fields: [userId], references: [id])
+  // SA-20 decision: deleting an item does NOT delete its borrow records.
+  // No onDelete rule on purpose: the database default (restrict) refuses to
+  // delete an item that still has records, and deleteItem() checks first and
+  // returns a clear message instead of a raw foreign-key error.
+  item       InventoryItem @relation(fields: [itemId], references: [id])
+  approvedBy User?         @relation("BorrowApprover", fields: [approvedById], references: [id])
+
+  @@index([userId])
+  @@index([itemId])
+  @@index([approvedById])
+  @@index([status])
+  @@map("borrow_records")
+}
+
+model ActivityLog {
+  id                Int             @id @default(autoincrement())
+  userId            Int?            @map("user_id")
+  // Nullable in the MySQL source. Make it required if every log row carries an action.
+  action            String?
+  entityType        String          @map("entity_type")
+  entityId          Int?            @map("entity_id")
+  office            String?
+  description       String
+  // Not in schema.sql, but login_throttle.php counts failed attempts by it.
+  attemptedIdNumber String?         @map("attempted_id_number")
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  // Serves the sign-in throttle: failed attempts per ID number in the last 15 minutes.
+  @@index([attemptedIdNumber, createdAt])
+  @@map("activity_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth models removed 2026-09-23 — replaced with a custom JWT session
+// (lib/session.ts). auth_users / auth_sessions / auth_accounts /
+// auth_verifications dropped from the schema; `npx prisma db push` will
+// remove those 4 tables from Supabase automatically.
+// ---------------------------------------------------------------------------
