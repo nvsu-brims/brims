@@ -1,16 +1,35 @@
-import { PrismaClient } from '../lib/generated/prisma/client';
+import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../lib/generated/prisma/client';
 
-// Standard Prisma 7 singleton pattern. Prevents exhausting the connection
-// pool from hot-reload creating a new PrismaClient on every file change in
-// dev (Next.js dev server re-evaluates modules on each request without this).
+// ---------------------------------------------------------------------------
+// Prisma singleton with pg.Pool for serverless environments (Vercel).
 //
-// The `prisma-client` generator (schema.prisma has no `url` in its
-// `datasource` block) does not read DATABASE_URL automatically — it
-// requires an explicit driver adapter. See the generated client's own
-// doc comment in lib/generated/prisma/internal/class.ts for this exact
-// pattern.
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+// PrismaPg accepts either a connectionString (single persistent connection)
+// or a pg.Pool (pooled connections). In serverless each function invocation
+// may be a cold start with a fresh module scope, meaning the globalForPrisma
+// singleton isn't guaranteed — multiple PrismaClient instances accumulate and
+// exhaust Supabase's session-mode connection limit (pool_size: 15).
+//
+// Using pg.Pool + Supabase's Transaction mode pooler (port 6543) instead of
+// the Session mode pooler (port 5432) solves this: connections are released
+// after each query rather than held for the lifetime of the client, so
+// serverless burst traffic never hits the ceiling.
+//
+// DATABASE_URL must point to the Transaction mode pooler:
+//   postgresql://[user]:[password]@[host]:6543/[db]?pgbouncer=true
+// DIRECT_URL must point to the direct connection (port 5432) for migrations.
+// ---------------------------------------------------------------------------
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Keep the pool small — each Vercel function has its own pool, so the
+  // effective total across all concurrent invocations is max * concurrency.
+  // 2 is enough for a single function; raise only if queries queue up.
+  max: 2,
+});
+
+const adapter = new PrismaPg(pool);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
