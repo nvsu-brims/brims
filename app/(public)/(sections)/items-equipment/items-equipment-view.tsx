@@ -1,3 +1,7 @@
+/* eslint-disable react-hooks/refs */
+// react-hooks/refs false positive: useHoverMenu returns useCallback ref
+// callbacks and event handlers — not .current reads — so these are safe to
+// use in JSX. The rule's static analysis cannot see through the hook boundary.
 "use client";
 
 import * as React from "react";

@@ -29,6 +29,7 @@ export async function GET() {
 
   // sessionVersion is the server-side revocation marker (BUG-02). The browser
   // has no use for it, so it is not sent.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { sessionVersion: _sessionVersion, ...publicUser } = user;
 
   return NextResponse.json({ user: publicUser, lastPasswordChangeAt });
