@@ -34,7 +34,7 @@ export default function AboutPage() {
         </p>
       </div>
 
-      <Card className="mb-4 rounded-2xl !border-0 shadow-md">
+      <Card className="mb-4 rounded-2xl border-0! shadow-md">
         <CardContent className="p-4 md:p-5">
           <h3 className="mb-3 text-xl font-bold text-green-800">
             What is NVSU-BRIMS?
@@ -62,9 +62,9 @@ export default function AboutPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {ABOUT_CARDS.map(({ icon: Icon, title, text }) => (
-          <Card key={title} className="h-full rounded-2xl !border-0 shadow-md">
+          <Card key={title} className="h-full rounded-2xl border-0! shadow-md">
             <CardContent className="flex flex-row items-start gap-3 p-4">
               <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700">
                 <Icon className="size-5" />

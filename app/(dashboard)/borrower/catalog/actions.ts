@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getSession } from "@/lib/session";
 import { isValidIsoDate, todayIso } from "@/lib/dates";
 import { createBorrowRequest } from "@/lib/repositories/borrowings";
 import { logActivity } from "@/lib/repositories/activity-logs";
+import { notifyNewRequestAlert } from "@/lib/email/notify";
 
 // Submit Request in the Borrow Request Form dialog. Port of
 // borrower_dashboard_borrow_requests.php's handleSubmitBorrowRequest().
@@ -52,7 +54,7 @@ export async function submitBorrowRequestAction(
     return { ok: false, error: result.error };
   }
 
-  void logActivity({
+  await logActivity({
     userId: user.userId,
     action: "borrow_requested",
     entityType: "borrow_record",
@@ -60,6 +62,11 @@ export async function submitBorrowRequestAction(
     description: `Requested to borrow "${result.itemName}".`,
     office: result.itemOffice,
   });
+
+  // E8: alert the admins of the item's office that a request is waiting. One
+  // email per admin; runs after the response is sent, never throws, and a
+  // failed send never affects the request.
+  after(() => notifyNewRequestAlert(result.id));
 
   revalidatePath("/borrower/catalog");
   revalidatePath("/borrower/requests");

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireAdminAction } from "@/lib/require-admin";
 import type { Office } from "@/lib/roles";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/lib/repositories/inventory";
 import { logActivity } from "@/lib/repositories/activity-logs";
 import { autoRejectPendingRequestsForItem } from "@/lib/repositories/borrowings";
+import { notifyRequestsAutoRejected } from "@/lib/email/notify";
 import {
   deleteItemImageByUrl,
   uploadItemImage,
@@ -210,6 +212,9 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
     // both the admin's Requests queue and the borrower's Borrow Requests
     // list with no way forward. Auto-reject clears it immediately instead.
     if (status === "unavailable") {
+      // Captured BEFORE auto-rejecting: the E5 emails find the requests that
+      // were rejected by this change as those stamped at or after this moment.
+      const autoRejectStartedAt = new Date();
       const rejectedCount = await autoRejectPendingRequestsForItem(id);
       if (rejectedCount > 0) {
         await logActivity({
@@ -227,6 +232,11 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
         revalidatePath("/admin/history");
         revalidatePath("/borrower/requests");
         revalidatePath("/borrower/history");
+
+        // E5: tell each borrower their pending request was closed because the
+        // item is now unavailable. Runs after the response is sent, never
+        // throws, and a failed send never affects the item change.
+        after(() => notifyRequestsAutoRejected(id, autoRejectStartedAt, caller.id));
       }
     }
   }

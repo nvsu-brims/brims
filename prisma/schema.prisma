@@ -131,6 +131,12 @@ model BorrowRecord {
   approvedById       Int?          @map("approved_by_id")
   returnedAt         DateTime?     @map("returned_at")
   remarks            String?
+  // Email E6 (daily unreturned-item notice): the Manila calendar day the last
+  // notice was sent for. Date only. The 8:00 AM job sends a record at most one
+  // notice per day by skipping rows where this is already today, and sets it
+  // only after Resend accepts the send, so a failed send is retried on the
+  // next run. Null = no notice sent yet.
+  lastOverdueEmailOn DateTime?     @db.Date @map("last_overdue_email_on")
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
 

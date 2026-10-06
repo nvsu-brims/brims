@@ -337,7 +337,7 @@ export default function SignUpPage() {
               <SelectContent position="popper" sideOffset={4}>
                 {organizationOptions.map((item) => (
                   <SelectItem key={item.code} value={item.code}>
-                    {item.name}
+                    {item.code}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -360,14 +360,14 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                className={cn(INPUT_CLASS, "pr-10")}
+                className={cn(INPUT_CLASS, "pr-11")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-white/70 hover:text-gray-50"
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-white/70 hover:text-gray-50"
               >
                 {showPassword ? (
                   <EyeOff className="size-4" />
@@ -391,7 +391,7 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 required
                 aria-invalid={passwordsMismatch}
-                className={cn(INPUT_CLASS, "pr-10")}
+                className={cn(INPUT_CLASS, "pr-11")}
               />
               <button
                 type="button"
@@ -400,7 +400,7 @@ export default function SignUpPage() {
                   showConfirmPassword ? "Hide password" : "Show password"
                 }
                 aria-pressed={showConfirmPassword}
-                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-white/70 hover:text-gray-50"
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-white/70 hover:text-gray-50"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="size-4" />
@@ -433,7 +433,7 @@ export default function SignUpPage() {
             href="/sign-in"
             className={cn(
               buttonVariants({ variant: "link" }),
-              "h-auto p-0 text-sm font-semibold text-gray-50 underline underline-offset-4 hover:text-white/80"
+              "h-auto px-0 py-2 text-sm font-semibold text-gray-50 underline underline-offset-4 hover:text-white/80"
             )}
           >
             Sign In here

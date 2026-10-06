@@ -24,7 +24,7 @@ const FAQS = [
   {
     question: "How do I borrow an item?",
     answer:
-      "As a student representative, sign in to your borrower account, browse the catalog, and submit a request for the item or equipment your organization needs. You'll be notified once it's approved.",
+      "As a student representative, sign in to your borrower account, browse the catalog, and submit a request for the item or equipment your organization needs. You'll receive an email at the address on your account once it's approved or declined, and you can always check the status of your request on your dashboard.",
   },
   {
     question: "What happens after my borrow request is approved?",

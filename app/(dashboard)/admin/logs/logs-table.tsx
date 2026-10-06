@@ -32,12 +32,18 @@ import { useHoverMenu } from "@/hooks/use-hover-menu";
 // $activityCategoryMap, which maps `entity_type` to a category. The mapping is
 // done server-side in the repository, so each row already carries `category`.
 //
-// Office scoping (FE-41, closed): a scoped SDO / UCAO admin never has
-// account_* or auth rows in the first place (those rows have no office, so
-// the query excludes them), so the "Account Actions" and "Security & Auth"
-// options would be dead ends for them. Exactly as in the PHP, those two
-// options are shown only to the super admin (`isSuperAdmin`), and the intro
-// sentence drops ", account management, and auth events" for a scoped admin.
+// Office scoping (BUG-30, fixed): a scoped SDO / UCAO admin's own auth
+// rows (sign-in, sign-out, unauthorized-page-access) DO carry that admin's
+// office — logActivity() sets it from the signed-in user for those three
+// actions — so getActivityLogs(office) already returns them scoped to that
+// admin. Only account_* rows (sign-up review, user management) carry no
+// office at all, so "Account Actions" stays super-admin-only; "Security &
+// Auth" is shown to every admin, scoped to their own history by the same
+// office filter as everything else on this page. The intro sentence
+// reflects this: a scoped admin sees "your own sign-ins and access", the
+// super admin additionally sees "account management, and everyone's auth
+// events" since only the super admin's office is null, matching every
+// borrower's and the super admin's own auth rows too.
 //
 // Filtering stays client-side against the fetched rows, unchanged from the
 // mock-data version.
@@ -123,7 +129,7 @@ export function LogsTable({
       // `line-clamp-3` caps it at 3 lines so one row's long details can't
       // balloon the card.
       cell: (row) => (
-        <span className="line-clamp-3 w-full min-w-0 flex-1 text-right break-words md:line-clamp-none md:w-auto md:min-w-0 md:flex-none md:text-left">
+        <span className="line-clamp-3 w-full min-w-0 flex-1 text-right wrap-break-word md:line-clamp-none md:w-auto md:min-w-0 md:flex-none md:text-left">
           {row.details}
         </span>
       ),
@@ -134,7 +140,7 @@ export function LogsTable({
       // by default via whitespace-nowrap/overflow-hidden/text-ellipsis) so
       // the text actually wraps instead of silently staying clipped.
       className:
-        "min-w-0! md:max-w-[320px] md:overflow-visible! md:text-clip! md:whitespace-normal! md:break-words!",
+        "min-w-0! md:max-w-[320px] md:overflow-visible! md:text-clip! md:whitespace-normal! md:wrap-break-word!",
     },
     {
       key: "timestamp",
@@ -166,7 +172,8 @@ export function LogsTable({
         </h3>
         <p className="mb-0 text-muted-foreground">
           Every logged action across the system — item changes, borrow
-          decisions{isSuper ? ", account management, and auth events" : ""}.
+          decisions, your own sign-ins and access
+          {isSuper ? ", account management, and everyone's auth events" : ""}.
         </p>
       </div>
 
@@ -223,11 +230,9 @@ export function LogsTable({
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="item">Item Actions</SelectItem>
                 <SelectItem value="borrow">Borrow Actions</SelectItem>
+                <SelectItem value="auth">Security &amp; Auth</SelectItem>
                 {isSuper && (
-                  <>
-                    <SelectItem value="account">Account Actions</SelectItem>
-                    <SelectItem value="auth">Security &amp; Auth</SelectItem>
-                  </>
+                  <SelectItem value="account">Account Actions</SelectItem>
                 )}
               </SelectContent>
             </Select>

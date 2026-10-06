@@ -2,15 +2,28 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { markOverdueBorrowRecords } from "@/lib/repositories/borrowings";
 import { logActivity } from "@/lib/repositories/activity-logs";
+import { sendDailyUnreturnedEmails } from "@/lib/email/notify";
 
 // ---------------------------------------------------------------------------
 // GET /api/cron/mark-overdue
 //
 // Real path: app/api/cron/mark-overdue/route.ts
 //
-// The daily job for BUG-13. It stores `status = 'overdue'` on every borrowed
-// record whose due day (Manila calendar day) has passed, and writes one
-// `item_overdue_reminder` activity-log row for each record it flips.
+// The daily job. It does two things, in this order:
+//
+//   1. BUG-13: stores `status = 'overdue'` on every borrowed record whose due
+//      day (Manila calendar day) has passed, and writes one
+//      `item_overdue_reminder` activity-log row for each record it flips.
+//   2. E6 email: sends each borrower whose item is due today or already
+//      overdue ONE notice ("Due today" / "Overdue by N days"), every day until
+//      the item is marked returned (sendDailyUnreturnedEmails in
+//      lib/email/notify.ts). `borrow_records.lastOverdueEmailOn` keeps it to
+//      one email per record per Manila day.
+//
+// SCHEDULE: every day at 8:00 AM Philippine time, so the emails arrive in the
+// morning and not at midnight. Schedulers such as Vercel Cron use UTC, and
+// 8:00 AM Manila (UTC+8, no daylight saving) is 00:00 UTC: `0 0 * * *`
+// (see vercel.json).
 //
 // Why it exists alongside the read-time check: borrower and admin pages already
 // SHOW a past-due borrowed item as overdue on every load (effectiveStatus in
@@ -18,10 +31,10 @@ import { logActivity } from "@/lib/repositories/activity-logs";
 // right. It is what makes the DATABASE agree, and it is the only thing that can
 // record a reminder once per record (and, later, send a reminder email).
 //
-// NOT YET SCHEDULED. Nothing calls this route automatically today — this
-// project is still in local development and has not been deployed anywhere,
-// so there is no scheduler to wire up yet. Until one exists, run it by hand
-// whenever you want overdue items marked (once a day is enough):
+// SCHEDULING. vercel.json (project root) registers this route with Vercel Cron.
+// Vercel Cron runs ONLY on production deployments, so nothing calls it while
+// the project is in local development. Until it is deployed, run it by hand
+// whenever you want overdue items marked and the daily emails sent:
 //
 //   curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/mark-overdue
 //
@@ -31,19 +44,22 @@ import { logActivity } from "@/lib/repositories/activity-logs";
 //
 // Running it manually, on no fixed schedule, is completely safe: the job is
 // idempotent (see below), so calling it twice in a row, or skipping a day,
-// never double-marks a record or double-logs a reminder.
+// never double-marks a record, double-logs a reminder or double-sends a notice
+// on the same day.
 //
-// Once this project is deployed, replace the manual curl above with a real
-// scheduler that hits this same URL once a day, e.g.:
-//   - Vercel Cron        → a `vercel.json` with a "crons" entry
-//     ({ "path": "/api/cron/mark-overdue", "schedule": "5 16 * * *" }, i.e.
-//     16:05 UTC = 00:05 Manila, just after the Manila day rolls over)
+// Using a different host? Replace vercel.json with that platform's scheduler
+// hitting this same URL once a day at 8:00 AM Manila (00:00 UTC):
 //   - GitHub Actions     → a workflow on a `schedule:` cron trigger that curls
 //     the deployed URL with the same Authorization header
-//   - Any other host     → that platform's own scheduler (system crontab,
-//     `node-cron`, etc.) calling the same URL the same way
-// Whichever is chosen, only the *caller* changes — this route itself does not
-// need to change.
+//   - Any other host     → system crontab, `node-cron`, etc. calling the same
+//     URL the same way
+// Only the *caller* changes — this route itself does not need to change.
+//
+// Vercel Hobby (free) plan notes: a cron may run once a day at most, and it can
+// fire anywhere inside the scheduled hour (so 8:00-8:59 AM Manila); a run can
+// very occasionally fire twice, which is harmless here (see "Idempotent").
+// Function time limits also apply; the emails are sent one at a time, so a long
+// list of overdue items needs `maxDuration` (set below) to be allowed to finish.
 //
 // SECURITY. This route writes to the database and the activity log, so it must
 // not be callable by anyone who finds the URL:
@@ -57,13 +73,20 @@ import { logActivity } from "@/lib/repositories/activity-logs";
 //
 // Idempotent: markOverdueBorrowRecords() only ever touches 'borrowed' rows, so
 // re-running it (a retry, a manual trigger) flips nothing twice and writes no
-// duplicate log rows.
+// duplicate log rows. The emails skip any record already emailed today, so a
+// re-run sends nothing twice; a record whose send failed is retried.
+//
+// BEFORE GOING TO PRODUCTION: emails use sandbox mode until EMAIL_SANDBOX is
+// set to false on the host. See the checklist at the top of lib/email/send.ts.
 // ---------------------------------------------------------------------------
 
 // Prisma and the pg adapter need the Node.js runtime, not the Edge runtime.
 export const runtime = "nodejs";
 // This must run on every request, never be prerendered or cached.
 export const dynamic = "force-dynamic";
+// Emails are sent one at a time (about 0.6 s apart for Resend's rate limit), so
+// give the job room to finish. The platform's own plan limit still applies.
+export const maxDuration = 60;
 
 /** Constant-time string compare, so the secret cannot be guessed by timing. */
 function safeEqual(a: string, b: string): boolean {
@@ -119,5 +142,14 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ ok: true, markedOverdue: changed.length });
+  // E6: the daily emails. sendDailyUnreturnedEmails never throws, and a
+  // failure here must not hide the overdue marking above, so the response
+  // still reports ok.
+  const emails = await sendDailyUnreturnedEmails();
+
+  return NextResponse.json({
+    ok: true,
+    markedOverdue: changed.length,
+    emails,
+  });
 }

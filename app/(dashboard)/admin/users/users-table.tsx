@@ -843,6 +843,11 @@ export function UsersTable({
                   )}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                A welcome email is sent to the email address above. It does not
+                include the password, so give the password to the user
+                directly.
+              </p>
             </FormField>
           </div>
         </form>
@@ -1074,8 +1079,10 @@ export function UsersTable({
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Leave blank to keep the current password. No email is sent —
-                let the user know directly if you change it.
+                Leave blank to keep the current password. If you set a new one,
+                the user is emailed that their password was reset (the email
+                does not include the password), so give them the new password
+                directly.
               </p>
             </FormField>
           </div>

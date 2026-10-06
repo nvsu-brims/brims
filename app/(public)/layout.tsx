@@ -150,7 +150,7 @@ function SiteHeader() {
             type="button"
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon" }),
-              "text-gray-50 hover:bg-white/10 hover:text-gray-50 md:hidden"
+              "size-11 text-gray-50 hover:bg-white/10 hover:text-gray-50 md:hidden"
             )}
             aria-label="Open menu"
           >

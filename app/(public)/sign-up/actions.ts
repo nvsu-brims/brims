@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { after } from "next/server";
 
 import { isValidCollegeOrganization } from "@/data/colleges";
 import { ID_NUMBER_ERROR, isValidIdNumber } from "@/lib/id-number";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/contact-number";
 import { createPendingSignUp } from "@/lib/repositories/users";
 import { logActivity } from "@/lib/repositories/activity-logs";
+import { notifyNewSignUpAlert } from "@/lib/email/notify";
 
 // Replaces sign_up.php's POST handler. Creates a borrower with signUpStatus
 // "pending"; an admin approves or rejects it from /admin/sign-up-requests.
@@ -114,6 +116,12 @@ export async function signUpAction(
       ? `Sign-up resubmitted for ID number '${idNumber}', previously rejected`
       : `New borrower sign-up submitted for ID number '${idNumber}'`,
   });
+
+  // E9: alert the super admins that a sign-up is waiting for approval. Also
+  // runs when a rejected applicant resubmits. One email per super admin; runs
+  // after the response is sent, never throws, and a failed send never affects
+  // the sign-up.
+  after(() => notifyNewSignUpAlert(result.id));
 
   return {
     status: "success",

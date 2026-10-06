@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireAdminAction } from "@/lib/require-admin";
 import {
   approveBorrowRequest,
@@ -8,6 +9,11 @@ import {
 } from "@/lib/repositories/borrowings";
 import { logActivity } from "@/lib/repositories/activity-logs";
 import { REJECT_REASONS } from "@/lib/reject-reasons";
+import {
+  notifyRequestApproved,
+  notifyRequestRejected,
+  notifyRequestsAutoRejected,
+} from "@/lib/email/notify";
 
 export type RequestActionResult = { ok: true } | { ok: false; error: string };
 
@@ -30,6 +36,10 @@ export async function approveRequestAction(
   const gate = await requireAdminAction("You are not allowed to manage borrow requests.");
   if (!gate.ok) return gate;
   const { caller } = gate;
+
+  // Captured BEFORE approving: the E5 emails find the requests that were
+  // auto-rejected by this approval as those stamped at or after this moment.
+  const approvalStartedAt = new Date();
 
   const result = await approveBorrowRequest(requestId, caller.id, caller.office);
   if (!result.ok) {
@@ -76,6 +86,24 @@ export async function approveRequestAction(
     revalidatePath("/borrower/catalog");
     revalidatePath("/borrower");
   }
+
+  // E3: tell the borrower their request was approved. E5: tell the borrowers
+  // whose pending requests for the same item were auto-rejected. Both run
+  // after the response is sent, never throw, and a failed send never affects
+  // the approval.
+  const autoRejectedItemId =
+    typeof result.itemId === "number" ? result.itemId : null;
+  const hadAutoRejections = (result.autoRejectedCount ?? 0) > 0;
+  after(async () => {
+    await notifyRequestApproved(requestId, caller.id);
+    if (autoRejectedItemId !== null && hadAutoRejections) {
+      await notifyRequestsAutoRejected(
+        autoRejectedItemId,
+        approvalStartedAt,
+        caller.id
+      );
+    }
+  });
 
   revalidateRequestPaths();
   return { ok: true };
@@ -129,6 +157,10 @@ export async function rejectRequestAction(
     description: `Rejected ${result.borrowerName}'s request to borrow "${result.itemName}": ${reason}.`,
     office: result.itemOffice,
   });
+
+  // E4: tell the borrower their request was not approved. The reason and note
+  // are read from the request's `remarks` (stored as combinedReason above).
+  after(() => notifyRequestRejected(input.id, caller.id));
 
   revalidateRequestPaths();
   return { ok: true };

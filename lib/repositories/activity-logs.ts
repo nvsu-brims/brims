@@ -99,9 +99,16 @@ function toIso(value: unknown): string {
  * itself, never by joining out to the item table (that broke for deleted
  * items in the PHP, see logs_reader.php's docblock). A scoped admin
  * (`office` set) gets only rows whose own `office` equals theirs. Account
- * and auth rows carry no office, so they are excluded for a scoped admin
- * without any extra rule. The super admin (`office` null / omitted) gets
- * every row, every category.
+ * rows (sign-up review, user management) carry no office, so they are
+ * excluded for a scoped admin without any extra rule — only the super
+ * admin ever sees them. Auth rows are different: `sign_in_success`,
+ * `sign_out`, and `unauthorized_page_access` are stamped with the
+ * signed-in actor's own office (see BUGS.md BUG-30), so a scoped admin
+ * correctly sees their own sign-ins/sign-outs/blocked-access attempts
+ * here, just not anyone else's — borrowers and the super admin have no
+ * office, so their auth rows only ever surface for the super admin, same
+ * as account rows. The super admin (`office` null / omitted) gets every
+ * row, every category.
  *
  * `limit` caps the result, for the Home "Recent Activity" widget (6). Omit it
  * for the full Activity Logs page.

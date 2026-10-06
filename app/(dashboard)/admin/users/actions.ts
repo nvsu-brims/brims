@@ -2,6 +2,8 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+// Aliased: editUserAction below has a local variable named `after`.
+import { after as afterResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { isSuperAdmin, type Office, type Role } from "@/lib/roles";
 import { isValidCollegeOrganization } from "@/data/colleges";
@@ -21,6 +23,10 @@ import {
   logActivity,
   getLastPasswordChangeAt,
 } from "@/lib/repositories/activity-logs";
+import {
+  notifyAccountCreated,
+  notifyPasswordReset,
+} from "@/lib/email/notify";
 
 const SALT_ROUNDS = 10;
 
@@ -201,6 +207,11 @@ export async function addUserAction(input: AddUserInput): Promise<UserActionResu
     description: `Added account, ${firstName} ${lastName} (${idNumber}).`,
   });
 
+  // E11: welcome email to the address entered for the new account. It never
+  // contains the password. Runs after the response is sent, never throws, and
+  // a failed send never affects the account creation.
+  afterResponse(() => notifyAccountCreated(result.id, caller.id));
+
   revalidateUserPaths();
   return { ok: true };
 }
@@ -306,6 +317,12 @@ export async function editUserAction(input: EditUserInput): Promise<UserActionRe
       entityId: input.id,
       description: `Reset the password for ${firstName} ${lastName} (${idNumber}).`,
     });
+
+    // E10: tell the user their password was reset. It never contains the
+    // password; the admin gives that to the user separately. Runs after the
+    // response is sent, never throws, and a failed send never affects the
+    // reset.
+    afterResponse(() => notifyPasswordReset(input.id, caller.id));
   }
 
   revalidateUserPaths();

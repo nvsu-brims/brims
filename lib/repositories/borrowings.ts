@@ -212,7 +212,8 @@ function toIso(value: unknown): string | null {
 /** A date-only column, as "YYYY-MM-DD". */
 function toDateOnly(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  return String(value).slice(0, 10);
+  const date = new Date(value as string);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
 function timeOf(iso: string | null): number {

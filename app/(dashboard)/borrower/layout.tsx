@@ -15,7 +15,6 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/shared/dashboard/header";
 import type { DashboardProfileInfo } from "@/components/shared/dashboard/profile-dialog";
 import { signOutAction } from "@/app/(public)/sign-out/actions";
-import { PENDING_COUNTS_CHANGED_EVENT } from "@/lib/pending-counts";
 import type { SessionUser } from "@/lib/session";
 
 // ---------------------------------------------------------------------------
@@ -126,11 +125,13 @@ export default function BorrowerDashboardLayout({
     lastPasswordChangeAt
   );
 
-  // Backs the "Borrowed Items" sidebar badge — refetched on mount, on every
-  // pathname change (so returning from e.g. Borrow Requests picks up a
-  // newly-approved item), and on the shared pending-counts event (dispatched
-  // after a Server Action that could change this count resolves), same
-  // pattern as admin-layout.tsx's badge counts.
+  // Backs the "Borrowed Items" sidebar badge — refetched on mount and on
+  // every pathname change (so returning from e.g. Borrow Requests picks up
+  // a newly-approved item). Unlike admin-layout.tsx's badge counts, this
+  // one can't also listen for the shared pending-counts event: that event
+  // is same-tab only, and the only actions that change this count (an
+  // admin approving a request or marking an item returned) happen in the
+  // admin's own browser tab, not the borrower's — see BUGS.md BUG-27.
   const [borrowedItemsCount, setBorrowedItemsCount] = useState(0);
   const refetchBorrowedItemsCount = React.useCallback(() => {
     if (!sessionUser) return;
@@ -143,15 +144,6 @@ export default function BorrowerDashboardLayout({
   useEffect(() => {
     refetchBorrowedItemsCount();
   }, [refetchBorrowedItemsCount, pathname]);
-
-  useEffect(() => {
-    const handler = () => {
-      refetchBorrowedItemsCount();
-    };
-    window.addEventListener(PENDING_COUNTS_CHANGED_EVENT, handler);
-    return () =>
-      window.removeEventListener(PENDING_COUNTS_CHANGED_EVENT, handler);
-  }, [refetchBorrowedItemsCount]);
 
   const borrowerNavItems = React.useMemo(
     () => buildBorrowerNavItems(borrowedItemsCount),

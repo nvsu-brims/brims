@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireAdminAction } from "@/lib/require-admin";
 import { markBorrowReturned } from "@/lib/repositories/borrowings";
 import { logActivity } from "@/lib/repositories/activity-logs";
+import { notifyItemReturned } from "@/lib/email/notify";
 
 function isValidId(id: unknown): id is number {
   return typeof id === "number" && Number.isInteger(id) && id > 0;
@@ -49,6 +51,10 @@ export async function markReturnedAction(
     // the super admin marked it returned.
     office: result.itemOffice,
   });
+
+  // E7: send the borrower a returned-item receipt. Runs after the response is
+  // sent, never throws, and a failed send never affects the return.
+  after(() => notifyItemReturned(requestId, caller.id));
 
   revalidatePath("/admin/borrowed-items");
   revalidatePath("/admin/history");

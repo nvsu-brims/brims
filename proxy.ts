@@ -3,6 +3,7 @@ import { jwtVerify, SignJWT } from "jose";
 
 import {
   getDashboardPath,
+  isSuperAdmin,
   SUPER_ADMIN_ONLY_PATHS,
   type Office,
   type Role,
@@ -183,7 +184,7 @@ export async function proxy(request: NextRequest) {
   // Scoped (SDO / UCAO) admins can't open the super-admin-only pages.
   if (
     session.role === "admin" &&
-    session.office !== null &&
+    !isSuperAdmin(session.office) &&
     SUPER_ADMIN_ONLY_PATHS.some((path) => isUnder(pathname, path))
   ) {
     return loggedRedirect(request, "blocked", "/admin");

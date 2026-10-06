@@ -288,17 +288,20 @@ export async function deleteItem(
     itemOffice: existing.office as Office,
     imageUrl: existing.image ?? null,
   };
-  try {
-    const deleted = await db.inventoryItem
-      .delete({ where: { id } })
-      .catch(() => null);
-    return deleted !== null ? gone : { status: "not_found" };
-  } catch (error) {
-    if (await itemHasBorrowRecords(id)) {
-      return { status: "has_records", itemName: existing.name };
-    }
-    throw error;
+  const deleted = await db.inventoryItem
+    .delete({ where: { id } })
+    .catch(async (error) => {
+      // A record created between the check above and this delete trips the
+      // foreign key; re-check here rather than trusting the delete's own
+      // error, since a plain .catch() on this promise can't be intercepted
+      // by a surrounding try/catch (see BUGS.md BUG-32).
+      if (await itemHasBorrowRecords(id)) return "has_records" as const;
+      throw error;
+    });
+  if (deleted === "has_records") {
+    return { status: "has_records", itemName: existing.name };
   }
+  return deleted !== null ? gone : { status: "not_found" };
 }
 
 async function itemHasBorrowRecords(itemId: number): Promise<boolean> {

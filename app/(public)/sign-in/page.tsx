@@ -144,14 +144,14 @@ function SignInForm() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 required
-                className="rounded-md! border-white/30 bg-black/20 pr-10 text-gray-50 placeholder:text-white/80 focus-visible:border-gray-50 focus-visible:ring-white/30"
+                className="rounded-md! border-white/30 bg-black/20 pr-11 text-gray-50 placeholder:text-white/80 focus-visible:border-gray-50 focus-visible:ring-white/30"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-white/70 hover:text-gray-50"
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-white/70 hover:text-gray-50"
               >
                 {showPassword ? (
                   <EyeOff className="size-4" />
@@ -178,7 +178,7 @@ function SignInForm() {
               href="/sign-up"
               className={cn(
                 buttonVariants({ variant: "link" }),
-                "h-auto p-0 text-sm font-semibold text-gray-50 underline underline-offset-4 hover:text-white/80"
+                "h-auto px-0 py-2 text-sm font-semibold text-gray-50 underline underline-offset-4 hover:text-white/80"
               )}
             >
               Sign Up here

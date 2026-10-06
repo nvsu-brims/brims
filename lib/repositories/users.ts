@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { db } from "@/prisma/db";
+import { Prisma } from "@/lib/generated/prisma/client";
 import type { Office, Role } from "@/lib/roles";
 import type { SessionUser } from "@/lib/session";
 
@@ -46,9 +47,19 @@ export async function verifyCredentials(
 
 // Sign-up and approval
 
-/** Postgres SQL state for a unique-constraint violation. */
+/**
+ * Prisma's unique-constraint violation (P2002). Under this project's
+ * `@prisma/adapter-pg` driver-adapter setup, the raw Postgres SQLSTATE
+ * (23505) isn't exposed as a top-level `sqlState` property — it's nested
+ * at `error.meta.driverAdapterError.cause.originalCode`, if needed at
+ * all, since `error.code === "P2002"` alone is what Prisma documents and
+ * guarantees. See BUGS.md BUG-29.
+ */
 function isUniqueViolation(error: unknown): boolean {
-  return (error as { sqlState?: string } | null)?.sqlState === "23505";
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  );
 }
 
 export interface NewSignUp {
