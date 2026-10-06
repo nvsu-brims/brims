@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, UserRound } from "lucide-react";
+import { LogOut, Menu, UserRound, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -138,10 +138,21 @@ export function DashboardHeader({
           showCloseButton={false}
           className="w-full! max-w-full! border-none bg-green-700 p-0 text-gray-50"
         >
-          <SheetHeader className="border-b border-white/10">
+          <SheetHeader className="flex flex-row items-center justify-between border-b border-white/10 px-4 py-3">
             <SheetTitle className="text-lg font-semibold text-gray-50">
               {brandTitle}
             </SheetTitle>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "text-gray-50 hover:bg-white/10 hover:text-gray-50"
+              )}
+              aria-label="Close menu"
+            >
+              <X className="size-5" />
+            </button>
           </SheetHeader>
 
           <nav className="flex flex-col gap-1 p-4">
