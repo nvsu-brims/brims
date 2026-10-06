@@ -134,7 +134,7 @@ export function DashboardHeader({
         </SheetTrigger>
         <SheetContent
           side="left"
-          hideCloseButton
+          showCloseButton={false}
           className="w-full! max-w-full! border-none bg-green-700 p-0 text-gray-50"
         >
           <SheetHeader className="border-b border-white/10">
