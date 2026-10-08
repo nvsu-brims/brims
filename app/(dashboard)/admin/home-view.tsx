@@ -334,9 +334,8 @@ export function HomeView({
                           <TooltipTrigger asChild>
                             <Button
                               type="button"
-                              variant="outline"
                               size="sm"
-                              className="rounded-lg border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800"
+                              className="rounded-lg bg-green-600 hover:bg-green-700"
                               disabled={isPending}
                               onClick={() => setApproveSignUpTarget(row)}
                             >
@@ -351,7 +350,7 @@ export function HomeView({
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="rounded-lg border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                              className="rounded-md! border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                               disabled={isPending}
                               onClick={() => setRejectSignUpTarget(row)}
                             >
@@ -409,9 +408,8 @@ export function HomeView({
                           <TooltipTrigger asChild>
                             <Button
                               type="button"
-                              variant="outline"
                               size="sm"
-                              className="rounded-lg border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800"
+                              className="rounded-lg bg-green-600 hover:bg-green-700"
                               disabled={isPending}
                               onClick={() => setApproveRequestTarget(row)}
                             >
@@ -427,7 +425,7 @@ export function HomeView({
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="rounded-lg border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                              className="rounded-md! border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                             >
                               <Link href="/admin/requests">
                                 <X className="size-4" />
