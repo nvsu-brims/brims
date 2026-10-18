@@ -19,11 +19,83 @@ export type ImageValidation =
   | { ok: false; error: string };
 
 /**
+ * Removes location and camera metadata (EXIF GPS, XMP, IPTC, comments, text
+ * chunks) from a JPEG, keeping the image data and the colour profile. Returns
+ * null if the file is malformed, so the caller can reject it instead of storing
+ * unchecked bytes. The result is never larger than the input.
+ */
+export function stripJpegMetadata(input: Buffer): Buffer | null {
+  const EOI = Buffer.from([0xff, 0xd9]);
+  if (input.length < 4 || input[0] !== 0xff || input[1] !== 0xd8) return null;
+  const parts: Buffer[] = [input.subarray(0, 2)];
+  let pos = 2;
+  while (pos < input.length) {
+    if (input[pos] !== 0xff) return null;
+    const start = pos;
+    while (pos < input.length && input[pos] === 0xff) pos++; // fill bytes
+    if (pos >= input.length) return null;
+    const marker = input[pos];
+    pos++;
+    if (marker === 0xd9) {
+      parts.push(input.subarray(start, pos));
+      return Buffer.concat(parts);
+    }
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      parts.push(input.subarray(start, pos)); // markers with no length field
+      continue;
+    }
+    if (pos + 2 > input.length) return null;
+    const length = input.readUInt16BE(pos);
+    if (length < 2 || pos + length > input.length) return null;
+    const segmentEnd = pos + length;
+    // Drop APP1 (EXIF/XMP), APP3-APP13 and APP15 (other metadata), and COM.
+    // Keep APP0 (JFIF), APP2 (ICC colour profile) and APP14 (Adobe colour flag).
+    const drop =
+      (marker >= 0xe1 && marker <= 0xef && marker !== 0xe2 && marker !== 0xee) ||
+      marker === 0xfe;
+    if (!drop) parts.push(input.subarray(start, segmentEnd));
+    pos = segmentEnd;
+    if (marker === 0xda) {
+      // Start of scan: the image data follows, ending at the last EOI marker.
+      // Anything after that (appended data) is dropped.
+      const eoi = input.lastIndexOf(EOI);
+      if (eoi < pos) return null;
+      parts.push(input.subarray(pos, eoi + 2));
+      return Buffer.concat(parts);
+    }
+  }
+  return null;
+}
+
+/**
+ * Removes text, EXIF and modification-time chunks from a PNG, keeping the image
+ * data and colour information. Returns null if the file is malformed.
+ */
+export function stripPngMetadata(input: Buffer): Buffer | null {
+  const SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (input.length < 8 || !input.subarray(0, 8).equals(SIG)) return null;
+  const DROP = new Set(["tEXt", "zTXt", "iTXt", "eXIf", "tIME"]);
+  const parts: Buffer[] = [input.subarray(0, 8)];
+  let pos = 8;
+  while (pos + 8 <= input.length) {
+    const length = input.readUInt32BE(pos);
+    const type = input.toString("latin1", pos + 4, pos + 8);
+    const end = pos + 12 + length;
+    if (end > input.length) return null;
+    if (!DROP.has(type)) parts.push(input.subarray(pos, end));
+    pos = end;
+    if (type === "IEND") return Buffer.concat(parts);
+  }
+  return null;
+}
+
+/**
  * Server-side validation, run BEFORE anything is uploaded or written.
  * The type is decided by the file's leading bytes ("magic bytes"), never by
  * the filename or the browser-declared MIME type, so a renamed .exe or script
  * can't pass as .jpg. The extension in the stored filename comes from the
- * detected type too.
+ * detected type too. Metadata (including GPS location) is removed before the
+ * picture is returned.
  */
 export async function validateItemImage(file: File): Promise<ImageValidation> {
   if (file.size === 0) return { ok: false, error: "The picture file is empty." };
@@ -42,14 +114,22 @@ export async function validateItemImage(file: File): Promise<ImageValidation> {
     buffer
       .subarray(0, 8)
       .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-  if (isPng) return { ok: true, buffer, ext: "png", contentType: "image/png" };
+  if (isPng) {
+    const clean = stripPngMetadata(buffer);
+    if (!clean) return { ok: false, error: "The picture could not be read. Please use a different file." };
+    return { ok: true, buffer: clean, ext: "png", contentType: "image/png" };
+  }
 
   const isJpeg =
     buffer.length >= 3 &&
     buffer[0] === 0xff &&
     buffer[1] === 0xd8 &&
     buffer[2] === 0xff;
-  if (isJpeg) return { ok: true, buffer, ext: "jpg", contentType: "image/jpeg" };
+  if (isJpeg) {
+    const clean = stripJpegMetadata(buffer);
+    if (!clean) return { ok: false, error: "The picture could not be read. Please use a different file." };
+    return { ok: true, buffer: clean, ext: "jpg", contentType: "image/jpeg" };
+  }
 
   return { ok: false, error: "The picture must be a PNG or JPEG image." };
 }
