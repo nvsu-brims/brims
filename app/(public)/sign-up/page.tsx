@@ -6,6 +6,14 @@ import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -86,6 +94,7 @@ export default function SignUpPage() {
   });
   const [passwordsMismatch, setPasswordsMismatch] = React.useState(false);
   const [consent, setConsent] = React.useState(false);
+  const [noticeOpen, setNoticeOpen] = React.useState(false);
 
   const [state, formAction, pending] = React.useActionState<
     SignUpState,
@@ -429,32 +438,56 @@ export default function SignUpPage() {
           </div>
         </div>
 
-        <details className="rounded-md border border-white/20 bg-black/10 px-3 py-2 text-sm text-white/90">
-          <summary className="cursor-pointer font-semibold text-gray-50">
-            Data Privacy Notice
-          </summary>
-          <div className="mt-2 space-y-2 leading-snug">
-            {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => (
-              <p key={paragraph} className="mb-0">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </details>
-
-        <div className="flex items-start gap-3 text-sm text-white/90">
-          <input
+        <div className="flex items-start gap-3">
+          <Checkbox
             id="privacyConsent"
             name="privacyConsent"
-            type="checkbox"
             checked={consent}
-            onChange={(event) => setConsent(event.currentTarget.checked)}
-            className="mt-1 size-4 shrink-0 accent-gray-50"
+            onCheckedChange={(value) => setConsent(value === true)}
+            className="mt-1 size-4 border-white/60 data-[state=checked]:border-gray-50 data-[state=checked]:bg-gray-50 data-[state=checked]:text-green-700"
           />
-          <label htmlFor="privacyConsent" className="leading-snug">
-            I have read the Data Privacy Notice and agree that NVSU-BRIMS may collect and use my personal information as described.
-          </label>
+          <Label
+            htmlFor="privacyConsent"
+            className="text-sm font-normal leading-snug text-white/90"
+          >
+            I have read the{" "}
+            <button
+              type="button"
+              onClick={() => setNoticeOpen(true)}
+              className="font-semibold text-gray-50 underline underline-offset-4 hover:text-white/80"
+            >
+              Data Privacy Notice
+            </button>{" "}
+            and agree that NVSU-BRIMS may collect and use my personal information as described.
+          </Label>
         </div>
+
+        <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
+          <DialogContent className="border-white/20 bg-green-700 text-gray-50 sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-gray-50">Data Privacy Notice</DialogTitle>
+              <DialogDescription className="sr-only">
+                How NVSU-BRIMS collects and uses your personal information.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm leading-relaxed text-white/90">
+              {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => (
+                <p key={paragraph} className="mb-0">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setNoticeOpen(false)}
+                className="rounded-md bg-gray-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-gray-50/90"
+              >
+                Close
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Button
           type="submit"
