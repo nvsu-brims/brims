@@ -26,10 +26,21 @@ import {
 const COOKIE = SESSION_COOKIE;
 const ALG = "HS256";
 const EXPIRES_IN = 60 * 60 * 24 * 7; // 7 days in seconds
-// Admin sessions also expire after this much inactivity (no requests).
-// Borrowers keep the 7-day limit only. Idle time is measured from the last
-// recorded activity, falling back to when the token was issued.
-const ADMIN_IDLE_LIMIT_MS = 12 * 60 * 60 * 1000; // 12 hours
+// Session limits by role. These are policy values: change them here if the
+// university sets different periods. The 7-day token lifetime above is the
+// hard upper limit for every role.
+//
+// IDLE_LIMIT_MS: signed out after this long with no requests. Idle time is
+// measured from the last recorded activity, or from sign-in if none is recorded.
+// MAX_AGE_MS: signed out this long after sign-in, even if the user stays active.
+const IDLE_LIMIT_MS = {
+  admin: 12 * 60 * 60 * 1000, // 12 hours
+  borrower: 24 * 60 * 60 * 1000, // 24 hours
+} as const;
+const MAX_AGE_MS = {
+  admin: 24 * 60 * 60 * 1000, // 24 hours
+  borrower: EXPIRES_IN * 1000, // 7 days (same as the token)
+} as const;
 // How often getSession() writes lastActiveAt. Writing on every request would
 // add a database write to every page load.
 const ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -132,8 +143,8 @@ export async function getSession(): Promise<SessionUser | null> {
   if (current.signUpStatus !== "approved") return null; // no longer approved
   if (current.sessionVersion !== session.sessionVersion) return null; // revoked
 
-  // Idle timeout (admins only). The last recorded activity is used; for an
-  // account with no record yet, the token's issue time is used instead.
+  // Idle timeout and maximum age, by role. Idle time uses the last recorded
+  // activity; for an account with no record yet, the token's issue time.
   const now = Date.now();
   const issuedAt = (session as unknown as { iat?: unknown }).iat;
   const issuedAtMs = typeof issuedAt === "number" ? issuedAt * 1000 : 0;
@@ -141,9 +152,9 @@ export async function getSession(): Promise<SessionUser | null> {
     ? current.lastActiveAt.getTime()
     : issuedAtMs;
 
-  if (session.role === "admin" && now - lastActiveMs > ADMIN_IDLE_LIMIT_MS) {
-    return null; // idle for too long
-  }
+  const roleKey = session.role === "admin" ? "admin" : "borrower";
+  if (now - lastActiveMs > IDLE_LIMIT_MS[roleKey]) return null; // idle too long
+  if (now - issuedAtMs > MAX_AGE_MS[roleKey]) return null; // signed in too long ago
 
   // Record activity, at most every few minutes. A failed write must not
   // sign anyone out, so errors are ignored here.
