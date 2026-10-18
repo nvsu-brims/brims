@@ -75,7 +75,7 @@ const PRIVACY_NOTICE_PARAGRAPHS = [
   "NVSU-BRIMS collects your name, ID number, email address, contact number, college, and organization to create and manage your borrowing account.",
   "We use this information only to review your sign-up, sign you in, process borrow requests, and send account and borrowing emails.",
   "NVSU staff who run the system can see it. Our service providers (hosting, database, and email) process it only to operate the system.",
-  "Account and sign-in activity is kept in the system's activity log as part of its audit trail. Retention period: [to be confirmed by the university].",
+  "Account and sign-in activity is kept in the system's activity log as part of its audit trail. Your personal information is kept for as long as your borrowing account is active, and for 2 years after the account is closed or deactivated, unless the law requires us to keep it longer.",
   "To ask about your personal data or to request a correction, contact the NVSU-BRIMS administrators at support@nvsu-brims.online.",
 ];
 
