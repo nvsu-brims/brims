@@ -60,6 +60,17 @@ const LABEL_CLASS = "font-semibold text-gray-50";
 
 const INITIAL_STATE: SignUpState = { status: "idle", message: null };
 
+// DRAFT notice. The wording must be reviewed and approved by the university
+// (its data protection officer or legal office) before go-live. Items in
+// square brackets must be filled in by the university.
+const PRIVACY_NOTICE_PARAGRAPHS = [
+  "NVSU-BRIMS collects your name, ID number, email address, contact number, college, and organization to create and manage your borrowing account.",
+  "We use this information only to review your sign-up, sign you in, process borrow requests, and send account and borrowing emails.",
+  "NVSU staff who run the system can see it. Our service providers (hosting, database, and email) process it only to operate the system.",
+  "Account and sign-in activity is kept in the system's activity log as part of its audit trail. Retention period: [to be confirmed by the university].",
+  "To ask about your personal data or to request a correction, contact the NVSU-BRIMS administrators at [contact details to be confirmed by the university].",
+];
+
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
@@ -74,6 +85,7 @@ export default function SignUpPage() {
     contactNumber: CONTACT_NUMBER_PREFIX,
   });
   const [passwordsMismatch, setPasswordsMismatch] = React.useState(false);
+  const [consent, setConsent] = React.useState(false);
 
   const [state, formAction, pending] = React.useActionState<
     SignUpState,
@@ -417,9 +429,36 @@ export default function SignUpPage() {
           </div>
         </div>
 
+        <details className="rounded-md border border-white/20 bg-black/10 px-3 py-2 text-sm text-white/90">
+          <summary className="cursor-pointer font-semibold text-gray-50">
+            Data Privacy Notice
+          </summary>
+          <div className="mt-2 space-y-2 leading-snug">
+            {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => (
+              <p key={paragraph} className="mb-0">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </details>
+
+        <div className="flex items-start gap-3 text-sm text-white/90">
+          <input
+            id="privacyConsent"
+            name="privacyConsent"
+            type="checkbox"
+            checked={consent}
+            onChange={(event) => setConsent(event.currentTarget.checked)}
+            className="mt-1 size-4 shrink-0 accent-gray-50"
+          />
+          <label htmlFor="privacyConsent" className="leading-snug">
+            I have read the Data Privacy Notice and agree that NVSU-BRIMS may collect and use my personal information as described.
+          </label>
+        </div>
+
         <Button
           type="submit"
-          disabled={pending || !college || !organization}
+          disabled={pending || !college || !organization || !consent}
           className="mt-2 w-full rounded-lg bg-gray-50 font-semibold text-green-700 hover:bg-gray-50/90"
         >
           {pending ? "Submitting..." : "Sign Up"}

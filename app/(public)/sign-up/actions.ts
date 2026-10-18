@@ -35,6 +35,12 @@ export async function signUpAction(
   const text = (key: string) => String(formData.get(key) ?? "").trim();
   const fail = (message: string): SignUpState => ({ status: "error", message });
 
+  // Consent is checked first, before any personal data is validated or stored.
+  // The checkbox is set in the browser, so the server must enforce it too.
+  if (formData.get("privacyConsent") !== "on") {
+    return fail("Please read the Data Privacy Notice and tick the box to agree before signing up.");
+  }
+
   const firstName = text("firstName");
   const lastName = text("lastName");
   const idNumber = text("idNumber");
