@@ -76,7 +76,7 @@ const PRIVACY_NOTICE_PARAGRAPHS = [
   "We use this information only to review your sign-up, sign you in, process borrow requests, and send account and borrowing emails.",
   "NVSU staff who run the system can see it. Our service providers (hosting, database, and email) process it only to operate the system.",
   "Account and sign-in activity is kept in the system's activity log as part of its audit trail. Retention period: [to be confirmed by the university].",
-  "To ask about your personal data or to request a correction, contact the NVSU-BRIMS administrators at [contact details to be confirmed by the university].",
+  "To ask about your personal data or to request a correction, contact the NVSU-BRIMS administrators at support@nvsu-brims.online.",
 ];
 
 export default function SignUpPage() {
@@ -465,14 +465,14 @@ export default function SignUpPage() {
         </div>
 
         <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
-          <DialogContent className="border-gray-200 bg-gray-50 text-green-900 sm:max-w-lg">
+          <DialogContent className="border-gray-200 bg-gray-50 p-8 text-green-900 sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-green-900">Data Privacy Notice</DialogTitle>
               <DialogDescription className="sr-only">
                 How NVSU-BRIMS collects and uses your personal information.
               </DialogDescription>
             </DialogHeader>
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm leading-relaxed text-gray-700">
+            <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2 text-sm leading-relaxed text-gray-700">
               {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => (
                 <p key={paragraph} className="mb-0">
                   {paragraph}

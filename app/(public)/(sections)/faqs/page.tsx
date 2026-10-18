@@ -44,7 +44,7 @@ const FAQS = [
   {
     question: "Still have questions?",
     answer:
-      "If you still have questions or need further assistance, please feel free to contact us at brims@nvsu.edu.ph or call (078) 321-2027. Our team will be happy to assist you with any additional concerns or inquiries.",
+      "If you still have questions or need further assistance, please feel free to contact us at support@nvsu-brims.online or call (078) 321-2027. Our team will be happy to assist you with any additional concerns or inquiries.",
   },
 ] as const;
 
