@@ -34,11 +34,11 @@ const EXPIRES_IN = 60 * 60 * 24 * 7; // 7 days in seconds
 // measured from the last recorded activity, or from sign-in if none is recorded.
 // MAX_AGE_MS: signed out this long after sign-in, even if the user stays active.
 const IDLE_LIMIT_MS = {
-  admin: 12 * 60 * 60 * 1000, // 12 hours
+  admin: 30 * 60 * 1000, // 30 minutes
   borrower: 24 * 60 * 60 * 1000, // 24 hours
 } as const;
 const MAX_AGE_MS = {
-  admin: 24 * 60 * 60 * 1000, // 24 hours
+  admin: 12 * 60 * 60 * 1000, // 12 hours
   borrower: EXPIRES_IN * 1000, // 7 days (same as the token)
 } as const;
 // How often getSession() writes lastActiveAt. Writing on every request would
