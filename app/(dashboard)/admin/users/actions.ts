@@ -35,7 +35,7 @@ async function requireSuperAdmin(): Promise<
   | { ok: false; error: string }
 > {
   const user = await getSession();
-  if (!user || user.role !== "admin" || !isSuperAdmin(user.office ?? null)) {
+  if (!user || user.role !== "admin" || !isSuperAdmin(user.office)) {
     return { ok: false, error: "You are not allowed to manage users." };
   }
   return { ok: true, caller: { id: user.userId } };

@@ -21,7 +21,7 @@ export default async function AdminSignUpRequestsPage() {
   // session is still valid, so it must not be cleared: plain /sign-in.
   if (!user) redirect("/api/session-expired");
   if (user.role !== "admin") redirect("/sign-in");
-  if (!isSuperAdmin(user.office ?? null)) redirect("/admin");
+  if (!isSuperAdmin(user.office)) redirect("/admin");
 
   const rows = await getPendingSignUps();
   return <SignUpRequestsTable rows={rows} />;

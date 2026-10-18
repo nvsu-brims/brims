@@ -44,5 +44,5 @@ export async function requireAdminAction(
   if (!user || user.role !== "admin") {
     return { ok: false, error: unauthorizedMessage };
   }
-  return { ok: true, caller: { id: user.userId, office: user.office ?? null } };
+  return { ok: true, caller: { id: user.userId, office: user.office } };
 }

@@ -96,6 +96,18 @@ export async function getSession(): Promise<SessionUser | null> {
     return null;
   }
 
+  // The office must be present and valid: null (super admin), or one of the
+  // two office admin values. A token with no office key is treated as
+  // revoked, so a missing value can never be read as super admin.
+  if (
+    !("office" in session) ||
+    (session.office !== null &&
+      session.office !== "sports_dev" &&
+      session.office !== "culture_arts")
+  ) {
+    return null;
+  }
+
   // Outside the try/catch above: if the DB is down, the honest answer is an
   // error, not a silent "signed out" that looks like a mass sign-out.
   const current = await db.user.findUnique({
