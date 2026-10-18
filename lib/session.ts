@@ -26,6 +26,13 @@ import {
 const COOKIE = SESSION_COOKIE;
 const ALG = "HS256";
 const EXPIRES_IN = 60 * 60 * 24 * 7; // 7 days in seconds
+// Admin sessions also expire after this much inactivity (no requests).
+// Borrowers keep the 7-day limit only. Idle time is measured from the last
+// recorded activity, falling back to when the token was issued.
+const ADMIN_IDLE_LIMIT_MS = 12 * 60 * 60 * 1000; // 12 hours
+// How often getSession() writes lastActiveAt. Writing on every request would
+// add a database write to every page load.
+const ACTIVITY_WRITE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface SessionUser {
   userId: number; // real users.id
@@ -112,13 +119,42 @@ export async function getSession(): Promise<SessionUser | null> {
   // error, not a silent "signed out" that looks like a mass sign-out.
   const current = await db.user.findUnique({
     where: { id: session.userId },
-    select: { sessionVersion: true, deletedAt: true, signUpStatus: true },
+    select: {
+      sessionVersion: true,
+      deletedAt: true,
+      signUpStatus: true,
+      lastActiveAt: true,
+    },
   });
 
   if (!current) return null; // account no longer exists
   if (current.deletedAt) return null; // deactivated
   if (current.signUpStatus !== "approved") return null; // no longer approved
   if (current.sessionVersion !== session.sessionVersion) return null; // revoked
+
+  // Idle timeout (admins only). The last recorded activity is used; for an
+  // account with no record yet, the token's issue time is used instead.
+  const now = Date.now();
+  const issuedAt = (session as unknown as { iat?: unknown }).iat;
+  const issuedAtMs = typeof issuedAt === "number" ? issuedAt * 1000 : 0;
+  const lastActiveMs = current.lastActiveAt
+    ? current.lastActiveAt.getTime()
+    : issuedAtMs;
+
+  if (session.role === "admin" && now - lastActiveMs > ADMIN_IDLE_LIMIT_MS) {
+    return null; // idle for too long
+  }
+
+  // Record activity, at most every few minutes. A failed write must not
+  // sign anyone out, so errors are ignored here.
+  if (!current.lastActiveAt || now - lastActiveMs > ACTIVITY_WRITE_INTERVAL_MS) {
+    await db.user
+      .update({
+        where: { id: session.userId },
+        data: { lastActiveAt: new Date(now) },
+      })
+      .catch(() => {});
+  }
 
   return session;
 }

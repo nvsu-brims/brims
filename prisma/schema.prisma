@@ -93,6 +93,9 @@ model User {
   // working. A dedicated column on purpose: updatedAt also moves on unrelated
   // edits, which would sign people out for no reason.
   sessionVersion Int          @default(0) @map("session_version")
+  // Last time getSession() saw this user's session (written at most every
+  // 5 minutes). Null = not yet recorded. Used for the admin idle timeout.
+  lastActiveAt DateTime?     @map("last_active_at")
 
   borrowRecords   BorrowRecord[] @relation("BorrowRequester")
   approvedRecords BorrowRecord[] @relation("BorrowApprover")
