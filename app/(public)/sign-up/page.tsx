@@ -450,6 +450,7 @@ export default function SignUpPage() {
             htmlFor="privacyConsent"
             className="text-sm font-normal leading-snug text-white/90"
           >
+            <span>
             I have read the{" "}
             <button
               type="button"
@@ -459,32 +460,24 @@ export default function SignUpPage() {
               Data Privacy Notice
             </button>{" "}
             and agree that NVSU-BRIMS may collect and use my personal information as described.
+            </span>
           </Label>
         </div>
 
         <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
-          <DialogContent className="border-white/20 bg-green-700 text-gray-50 sm:max-w-lg">
+          <DialogContent className="border-gray-200 bg-gray-50 text-green-900 sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle className="text-gray-50">Data Privacy Notice</DialogTitle>
+              <DialogTitle className="text-green-900">Data Privacy Notice</DialogTitle>
               <DialogDescription className="sr-only">
                 How NVSU-BRIMS collects and uses your personal information.
               </DialogDescription>
             </DialogHeader>
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm leading-relaxed text-white/90">
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm leading-relaxed text-gray-700">
               {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => (
                 <p key={paragraph} className="mb-0">
                   {paragraph}
                 </p>
               ))}
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setNoticeOpen(false)}
-                className="rounded-md bg-gray-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-gray-50/90"
-              >
-                Close
-              </button>
             </div>
           </DialogContent>
         </Dialog>
