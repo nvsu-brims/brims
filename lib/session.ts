@@ -148,9 +148,11 @@ export async function getSession(): Promise<SessionUser | null> {
   const now = Date.now();
   const issuedAt = (session as unknown as { iat?: unknown }).iat;
   const issuedAtMs = typeof issuedAt === "number" ? issuedAt * 1000 : 0;
-  const lastActiveMs = current.lastActiveAt
-    ? current.lastActiveAt.getTime()
-    : issuedAtMs;
+  // The idle clock starts at the later of the last recorded activity and this
+  // token's issue time. A fresh sign-in must not inherit an old timestamp
+  // from an earlier session, or it is rejected as idle straight away.
+  const recordedMs = current.lastActiveAt ? current.lastActiveAt.getTime() : 0;
+  const lastActiveMs = Math.max(recordedMs, issuedAtMs);
 
   const roleKey = session.role === "admin" ? "admin" : "borrower";
   if (now - lastActiveMs > IDLE_LIMIT_MS[roleKey]) return null; // idle too long
@@ -158,7 +160,7 @@ export async function getSession(): Promise<SessionUser | null> {
 
   // Record activity, at most every few minutes. A failed write must not
   // sign anyone out, so errors are ignored here.
-  if (!current.lastActiveAt || now - lastActiveMs > ACTIVITY_WRITE_INTERVAL_MS) {
+  if (now - recordedMs > ACTIVITY_WRITE_INTERVAL_MS) {
     await db.user
       .update({
         where: { id: session.userId },
