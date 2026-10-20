@@ -157,7 +157,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
           Borrow Items
         </h3>
         <p className="mb-0 text-muted-foreground">
-          Available items and equipment from SDO and UCAO.
+          Items and equipment from SDO and UCAO.
         </p>
       </div>
 

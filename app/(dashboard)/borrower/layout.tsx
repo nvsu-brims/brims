@@ -31,13 +31,13 @@ function buildBorrowerNavItems(
     {
       kind: "link",
       href: "/borrower/catalog",
-      label: "Borrow Items",
+      label: "Items",
       icon: LayoutGrid,
     },
     {
       kind: "link",
       href: "/borrower/requests",
-      label: "Borrow Requests",
+      label: "Requests",
       icon: Hourglass,
     },
     {
@@ -50,7 +50,7 @@ function buildBorrowerNavItems(
     {
       kind: "link",
       href: "/borrower/history",
-      label: "Borrow History",
+      label: "History",
       icon: History,
     },
   ];
