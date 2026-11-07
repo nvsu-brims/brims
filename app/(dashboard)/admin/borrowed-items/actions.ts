@@ -1,187 +1,75 @@
-"use client";
+"use server";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  DataTable,
-  StatusBadge,
-  type DataTableColumn,
-} from "@/components/shared/dashboard/data-table";
-import { ConfirmDialog } from "@/components/shared/dashboard/confirm-dialog";
-import { formatDate } from "@/lib/dates";
-import type { AdminBorrowRow } from "@/lib/repositories/borrowings";
-import { markReturnedAction } from "./actions";
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { requireAdminAction } from "@/lib/require-admin";
+import { markBorrowReturned } from "@/lib/repositories/borrowings";
+import { logActivity } from "@/lib/repositories/activity-logs";
+import { notifyItemReturned } from "@/lib/email/notify";
 
-// ---------------------------------------------------------------------------
-// Was admin-borrowed-items-page.tsx (a single client page over
-// MOCK_BORROWED_ITEMS). Now the client half of a server page + client table
-// split, same shape as admin/items/(page.tsx + items-table.tsx). Mark as
-// Returned now calls the real Server Action in ./actions.ts instead of a TODO
-// no-op. MOCK_BORROWED_ITEMS is gone.
-//
-// No filter bar here, matching the PHP's own comment: "Styled like Borrow
-// Requests, not Borrow History — plain card + table, no filter dropdown, no
-// date-range picker." Every row here is by definition borrowed/overdue —
-// other statuses live in Borrower Requests or Borrower History.
-// ---------------------------------------------------------------------------
-
-interface BorrowedItemsTableProps {
-  borrowedItems: AdminBorrowRow[];
+function isValidId(id: unknown): id is number {
+  return typeof id === "number" && Number.isInteger(id) && id > 0;
 }
 
-export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+export type BorrowedItemActionResult = { ok: true } | { ok: false; error: string };
 
-  const [markReturnedTarget, setMarkReturnedTarget] =
-    React.useState<AdminBorrowRow | null>(null);
-  // One condition per borrowed unit (Plan 1, D6). Starts as Good for each unit.
-  const [unitConditions, setUnitConditions] = React.useState<
-    ("good" | "damaged" | "lost")[]
-  >([]);
-  React.useEffect(() => {
-    setUnitConditions(
-      Array.from({ length: markReturnedTarget?.quantity ?? 0 }, () => "good" as const)
-    );
-  }, [markReturnedTarget]);
+export type UnitCondition = "good" | "damaged" | "lost";
+const UNIT_CONDITIONS: UnitCondition[] = ["good", "damaged", "lost"];
 
-  function handleConfirmReturn() {
-    const target = markReturnedTarget;
-    setMarkReturnedTarget(null);
-    if (!target) return;
-
-    startTransition(async () => {
-      const result = await markReturnedAction(target.id, unitConditions);
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Marked as returned");
-      router.refresh();
-    });
+export async function markReturnedAction(
+  requestId: number,
+  conditions: UnitCondition[]
+): Promise<BorrowedItemActionResult> {
+  if (!isValidId(requestId)) {
+    return { ok: false, error: "Invalid request." };
+  }
+  if (
+    !Array.isArray(conditions) ||
+    conditions.length < 1 ||
+    !conditions.every((c) => UNIT_CONDITIONS.includes(c))
+  ) {
+    return { ok: false, error: "Choose a condition for every unit." };
   }
 
-  const columns: DataTableColumn<AdminBorrowRow>[] = [
-    {
-      key: "borrower",
-      header: "Borrower",
-      cell: (row) => row.borrowerName,
-    },
-    {
-      key: "idNumber",
-      header: "ID Number",
-      cell: (row) => row.borrowerIdNumber,
-    },
-    {
-      key: "college",
-      header: "College",
-      cell: (row) => row.college ?? "—",
-    },
-    {
-      key: "organization",
-      header: "Organization",
-      cell: (row) => row.organization ?? "—",
-    },
-    {
-      key: "item",
-      header: "Item",
-      cell: (row) => row.itemName,
-      title: (row) => row.itemName,
-      className: "md:max-w-[200px] md:truncate",
-    },
-    {
-      key: "status",
-      header: "Status",
-      cell: (row) => <StatusBadge status={row.status} fixedWidth />,
-    },
-    {
-      key: "dueAt",
-      header: "Due Date",
-      cell: (row) => formatDate(row.dueAt),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      cell: (row) => (
-        <div className="flex justify-start">
-          <Button
-            type="button"
-            size="sm"
-            disabled={isPending}
-            className="rounded-md! bg-green-600 hover:bg-green-700"
-            onClick={() => setMarkReturnedTarget(row)}
-          >
-            Mark as Returned
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const gate = await requireAdminAction("You are not allowed to manage borrowed items.");
+  if (!gate.ok) return gate;
+  const { caller } = gate;
 
-  return (
-    <div>
-      <div className="mb-4">
-        <h3 className="mb-1 text-lg font-semibold text-green-800">
-          Borrowed Items
-        </h3>
-        <p className="mb-0 text-muted-foreground">
-          Items currently out — borrowed or overdue for return.
-        </p>
-      </div>
+  const result = await markBorrowReturned(requestId, caller.office, caller.id, conditions);
+  if (!result.ok) {
+    // Same audit trail approve/reject already write: an admin from one office
+    // trying to act on the other office's item is recorded, not just refused.
+    if (result.crossOfficeBlock) {
+      await logActivity({
+        userId: caller.id,
+        action: "cross_office_action_blocked",
+        entityType: "borrow_record",
+        entityId: requestId,
+        description: `Blocked mark-as-returned attempt on "${result.crossOfficeBlock.itemName}" — different office.`,
+        office: caller.office,
+      });
+    }
+    return { ok: false, error: result.error };
+  }
 
-      <div className="rounded-2xl bg-white p-2 shadow-md md:p-4">
-        <DataTable
-          columns={columns}
-          rows={borrowedItems}
-          getRowId={(row) => row.id}
-          emptyMessage="No items currently borrowed."
-        />
-      </div>
+  await logActivity({
+    userId: caller.id,
+    action: "borrow_returned",
+    entityType: "borrow_record",
+    entityId: requestId,
+    description: `Marked "${result.itemName}" as returned by ${result.borrowerName}.`,
+    // The item's office, so the owning office's admins see the row even when
+    // the super admin marked it returned.
+    office: result.itemOffice,
+  });
 
-      <ConfirmDialog
-        open={markReturnedTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setMarkReturnedTarget(null);
-        }}
-        title="Mark as Returned"
-        description={
-          markReturnedTarget
-            ? `Mark ${markReturnedTarget.borrowerName}'s "${markReturnedTarget.itemName}" as returned?`
-            : ""
-        }
-        confirmLabel="Mark as Returned"
-        variant="success"
-        onConfirm={handleConfirmReturn}
-      >
-        {markReturnedTarget && markReturnedTarget.quantity > 0 ? (
-          <div className="space-y-3 text-sm">
-            {unitConditions.map((condition, index) => (
-              <div key={index} className="flex items-center justify-between gap-3">
-                <label htmlFor={`unit-condition-${index}`} className="font-medium">
-                  Unit {index + 1}
-                </label>
-                <select
-                  id={`unit-condition-${index}`}
-                  value={condition}
-                  onChange={(event) => {
-                    const value = event.target.value as "good" | "damaged" | "lost";
-                    setUnitConditions((previous) =>
-                      previous.map((c, i) => (i === index ? value : c))
-                    );
-                  }}
-                  className="rounded-md border border-input bg-white px-3 py-1.5"
-                >
-                  <option value="good">Good</option>
-                  <option value="damaged">Damaged</option>
-                  <option value="lost">Lost</option>
-                </select>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </ConfirmDialog>
-    </div>
-  );
+  // E7: send the borrower a returned-item receipt. Runs after the response is
+  // sent, never throws, and a failed send never affects the return.
+  after(() => notifyItemReturned(requestId, caller.id));
+
+  revalidatePath("/admin/borrowed-items");
+  revalidatePath("/admin/history");
+  revalidatePath("/admin");
+
+  return { ok: true };
 }
