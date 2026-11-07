@@ -10,6 +10,18 @@ import {
   type DataTableColumn,
 } from "@/components/shared/dashboard/data-table";
 import { ConfirmDialog } from "@/components/shared/dashboard/confirm-dialog";
+import {
+  FormField,
+  FIELD_FOCUS_RING_CLASSES,
+} from "@/components/shared/dashboard/form-field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dates";
 import type { AdminBorrowRow } from "@/lib/repositories/borrowings";
 import { markReturnedAction } from "./actions";
@@ -30,6 +42,12 @@ import { markReturnedAction } from "./actions";
 interface BorrowedItemsTableProps {
   borrowedItems: AdminBorrowRow[];
 }
+
+const CONDITION_LABELS: Record<"good" | "damaged" | "lost", string> = {
+  good: "Good",
+  damaged: "Damaged",
+  lost: "Lost",
+};
 
 export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
   const router = useRouter();
@@ -163,26 +181,38 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
         {markReturnedTarget && markReturnedTarget.quantity > 0 ? (
           <div className="space-y-3 text-sm">
             {unitConditions.map((condition, index) => (
-              <div key={index} className="flex items-center justify-between gap-3">
-                <label htmlFor={`unit-condition-${index}`} className="font-medium">
-                  Unit {index + 1}
-                </label>
-                <select
-                  id={`unit-condition-${index}`}
+              <FormField
+                key={index}
+                label={
+                  unitConditions.length > 1
+                    ? `Unit ${index + 1} Item Condition`
+                    : "Item Condition"
+                }
+              >
+                <Select
                   value={condition}
-                  onChange={(event) => {
-                    const value = event.target.value as "good" | "damaged" | "lost";
+                  onValueChange={(value) => {
+                    const next = (value as "good" | "damaged" | "lost") ?? condition;
                     setUnitConditions((previous) =>
-                      previous.map((c, i) => (i === index ? value : c))
+                      previous.map((c, i) => (i === index ? next : c))
                     );
                   }}
-                  className="rounded-md border border-input bg-white px-3 py-1.5"
                 >
-                  <option value="good">Good</option>
-                  <option value="damaged">Damaged</option>
-                  <option value="lost">Lost</option>
-                </select>
-              </div>
+                  <SelectTrigger className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}>
+                    <SelectValue>{CONDITION_LABELS[condition]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    sideOffset={4}
+                    className="w-full"
+                    style={{ width: "var(--anchor-width)" }}
+                  >
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="damaged">Damaged</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
             ))}
           </div>
         ) : null}
