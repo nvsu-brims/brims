@@ -171,6 +171,8 @@ export async function createPendingSignUp(
 /** One row of the admin Sign-Up Requests table. */
 export interface SignUpRequest {
   id: number;
+  /** When the sign-up was submitted (ISO). Sorting uses this. */
+  createdAt: string;
   firstName: string;
   lastName: string;
   idNumber: string;
@@ -184,13 +186,14 @@ export interface SignUpRequest {
 export async function getPendingSignUps(): Promise<SignUpRequest[]> {
   const rows = await db.user.findMany({
     where: { signUpStatus: "pending" },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return rows
     .filter((user) => !user.deletedAt)
     .map((user) => ({
       id: user.id,
+      createdAt: user.createdAt.toISOString(),
       firstName: user.firstName,
       lastName: user.lastName,
       idNumber: user.idNumber,
@@ -198,6 +201,30 @@ export async function getPendingSignUps(): Promise<SignUpRequest[]> {
       college: user.college,
       organization: user.organization,
     }));
+}
+
+/**
+ * The newest pending sign-ups, newest first, for the super admin dashboard
+ * widget. The Sign-up Requests page keeps using getPendingSignUps(), which is
+ * oldest first so requests are reviewed in the order they arrived.
+ */
+export async function getLatestPendingSignUps(limit: number): Promise<SignUpRequest[]> {
+  const rows = await db.user.findMany({
+    where: { signUpStatus: "pending", deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+
+  return rows.map((user) => ({
+    createdAt: user.createdAt.toISOString(),
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    idNumber: user.idNumber,
+    email: user.email,
+    college: user.college,
+    organization: user.organization,
+  }));
 }
 
 /**

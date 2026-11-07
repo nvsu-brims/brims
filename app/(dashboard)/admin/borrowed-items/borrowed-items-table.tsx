@@ -10,6 +10,7 @@ import {
   type DataTableColumn,
 } from "@/components/shared/dashboard/data-table";
 import { ConfirmDialog } from "@/components/shared/dashboard/confirm-dialog";
+import { FilterBar } from "@/components/shared/dashboard/filter-bar";
 import {
   FormField,
   FIELD_FOCUS_RING_CLASSES,
@@ -50,6 +51,20 @@ const CONDITION_LABELS: Record<"good" | "damaged" | "lost", string> = {
 };
 
 export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
+  const [sortOrder, setSortOrder] = React.useState<"newest" | "oldest">("newest");
+  const [search, setSearch] = React.useState("");
+  // Name search and newest-to-oldest sort (default). Filters the rows shown.
+  const visibleRows = React.useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const matched = borrowedItems.filter((row) =>
+      (row.borrowerName).toLowerCase().includes(term)
+    );
+    return [...matched].sort((a, b) => {
+      const diff =
+        new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime();
+      return sortOrder === "newest" ? -diff : diff;
+    });
+  }, [borrowedItems, search, sortOrder]);
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
@@ -154,10 +169,30 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
         </p>
       </div>
 
+      <FilterBar
+        filters={[
+          {
+            value: sortOrder,
+            onValueChange: (value) => setSortOrder(value as "newest" | "oldest"),
+            options: [
+              { value: "newest", label: "Newest to oldest" },
+              { value: "oldest", label: "Oldest to newest" },
+            ],
+            placeholder: "Newest to oldest",
+            widthClassName: "sm:w-60",
+          },
+        ]}
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Search by borrower name...",
+        }}
+      />
+
       <div className="rounded-2xl bg-white p-2 shadow-md md:p-4">
         <DataTable
           columns={columns}
-          rows={borrowedItems}
+          rows={visibleRows}
           getRowId={(row) => row.id}
           emptyMessage="No items currently borrowed."
         />

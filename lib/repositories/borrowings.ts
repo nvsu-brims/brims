@@ -546,7 +546,7 @@ export async function getPendingBorrowRequests(
 ): Promise<AdminBorrowRow[]> {
   const records = await db.borrowRecord.findMany({
     where: { status: "pending" },
-    orderBy: { requestedAt: "asc" },
+    orderBy: { requestedAt: "desc" },
   });
 
   const rows = await hydrateAdminRows(records);

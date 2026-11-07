@@ -14,6 +14,7 @@ import {
   type DataTableColumn,
 } from "@/components/shared/dashboard/data-table";
 import { ConfirmDialog } from "@/components/shared/dashboard/confirm-dialog";
+import { FilterBar } from "@/components/shared/dashboard/filter-bar";
 import { notifyPendingCountsChanged } from "@/lib/pending-counts";
 import type { SignUpRequest } from "@/lib/repositories/users";
 import {
@@ -38,6 +39,20 @@ import {
 // ---------------------------------------------------------------------------
 
 export function SignUpRequestsTable({ rows }: { rows: SignUpRequest[] }) {
+  const [sortOrder, setSortOrder] = React.useState<"newest" | "oldest">("newest");
+  const [search, setSearch] = React.useState("");
+  // Name search and newest-to-oldest sort (default). Filters the rows shown.
+  const visibleRows = React.useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const matched = rows.filter((row) =>
+      (`${row.firstName} ${row.lastName}`).toLowerCase().includes(term)
+    );
+    return [...matched].sort((a, b) => {
+      const diff =
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return sortOrder === "newest" ? -diff : diff;
+    });
+  }, [rows, search, sortOrder]);
   // Row currently targeted by each confirm dialog.
   const [approveTarget, setApproveTarget] =
     React.useState<SignUpRequest | null>(null);
@@ -139,10 +154,30 @@ export function SignUpRequestsTable({ rows }: { rows: SignUpRequest[] }) {
         </p>
       </div>
 
+      <FilterBar
+        filters={[
+          {
+            value: sortOrder,
+            onValueChange: (value) => setSortOrder(value as "newest" | "oldest"),
+            options: [
+              { value: "newest", label: "Newest to oldest" },
+              { value: "oldest", label: "Oldest to newest" },
+            ],
+            placeholder: "Newest to oldest",
+            widthClassName: "sm:w-60",
+          },
+        ]}
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Search by applicant name...",
+        }}
+      />
+
       <div className="rounded-2xl bg-white p-2 shadow-md md:p-4">
         <DataTable
           columns={columns}
-          rows={rows}
+          rows={visibleRows}
           getRowId={(row) => row.id}
           emptyMessage="No pending sign-up requests right now."
         />
