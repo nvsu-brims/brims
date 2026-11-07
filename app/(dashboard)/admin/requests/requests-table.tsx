@@ -216,7 +216,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
               { value: "oldest", label: "Oldest to newest" },
             ],
             placeholder: "Newest to oldest",
-            widthClassName: "sm:w-60",
+            widthClassName: "sm:w-48",
           },
         ]}
         search={{
