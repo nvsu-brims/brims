@@ -194,6 +194,8 @@ export interface BorrowerBorrowRow {
   id: number;
   status: BorrowStatus;
   itemId: number;
+  /** Units in this borrow. */
+  quantity: number;
   itemName: string;
   itemOffice: Office;
   requestedAt: string;
@@ -314,6 +316,7 @@ export async function getBorrowerHomeStats(
       // BUG-13: a borrowed item past its due day reads as overdue.
       status: effectiveStatus(record.status, dueAt),
       itemId: record.itemId,
+      quantity: record.quantity,
       itemName: item.name,
       itemOffice: item.office as Office,
       requestedAt: toIso(record.requestedAt) ?? "",

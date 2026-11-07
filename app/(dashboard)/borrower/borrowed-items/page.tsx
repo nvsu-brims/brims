@@ -22,6 +22,7 @@ export default async function BorrowedItemsPage() {
               {
                 id: row.id,
                 itemName: row.itemName,
+                quantity: row.quantity,
                 office: row.itemOffice,
                 status: row.status,
                 requestedAt: row.requestedAt,

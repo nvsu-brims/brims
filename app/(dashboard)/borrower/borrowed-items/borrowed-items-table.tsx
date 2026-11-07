@@ -27,6 +27,8 @@ import {
 interface BorrowedItemRow {
   id: number;
   itemName: string;
+  /** Units in this borrow. */
+  quantity: number;
   office: Office;
   status: "borrowed" | "overdue";
   /** ISO timestamp. */
@@ -42,6 +44,11 @@ const columns: DataTableColumn<BorrowedItemRow>[] = [
     cell: (row) => row.itemName,
     title: (row) => row.itemName,
     className: "md:max-w-[220px] md:truncate",
+  },
+  {
+    key: "quantity",
+    header: "Quantity",
+    cell: (row) => row.quantity,
   },
   {
     key: "office",

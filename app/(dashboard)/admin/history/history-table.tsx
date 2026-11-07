@@ -90,6 +90,11 @@ export function HistoryTable({ history }: HistoryTableProps) {
       className: "md:max-w-[220px] md:truncate",
     },
     {
+      key: "quantity",
+      header: "Quantity",
+      cell: (row) => row.quantity,
+    },
+    {
       key: "status",
       header: "Status",
       cell: (row) => <StatusBadge status={row.status} fixedWidth />,
