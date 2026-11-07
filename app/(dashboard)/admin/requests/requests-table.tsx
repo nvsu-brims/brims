@@ -115,6 +115,11 @@ export function RequestsTable({ requests }: RequestsTableProps) {
       className: "md:max-w-[200px] md:truncate",
     },
     {
+      key: "quantity",
+      header: "Quantity",
+      cell: (row) => row.quantity,
+    },
+    {
       key: "requestedAt",
       header: "Requested",
       cell: (row) => formatDate(row.requestedAt),
