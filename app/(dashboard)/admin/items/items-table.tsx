@@ -43,6 +43,8 @@ import {
   addItemAction,
   deleteItemAction,
   deleteItemsAction,
+  forceDeleteItemAction,
+  getItemDeleteSummaryAction,
   editItemAction,
   type ItemActionResult,
 } from "./actions";
@@ -132,6 +134,8 @@ export function ItemsTable({
 }) {
   const router = useRouter();
   const showOffice = scopedOffice === null;
+  // Super admins (no office) may permanently delete items with borrow history.
+  const isSuperAdmin = scopedOffice === null;
   const [isPending, startTransition] = React.useTransition();
   // Inline error for the Add/Edit dialogs specifically — those stay open
   // on failure so the user can fix the form and resubmit, so their error
@@ -178,6 +182,24 @@ export function ItemsTable({
   // actionConfirmModal ("Delete Selected Items" / "Delete N item(s)? This
   // can't be undone.").
   const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false);
+  // Super admin delete: history counts, and the name the admin must type.
+  const [deleteSummary, setDeleteSummary] = React.useState<{
+    historyCount: number;
+    activeCount: number;
+  } | null>(null);
+  const [confirmName, setConfirmName] = React.useState("");
+  React.useEffect(() => {
+    setConfirmName("");
+    setDeleteSummary(null);
+    if (!deleteTarget || !isSuperAdmin) return;
+    let cancelled = false;
+    getItemDeleteSummaryAction(deleteTarget.id).then((result) => {
+      if (!cancelled && result.ok) setDeleteSummary(result.summary);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [deleteTarget, isSuperAdmin]);
 
   // ---- Add Item form state (inlined, was AddItemDialog) ----
   const [addItemOpen, setAddItemOpen] = React.useState(false);
@@ -796,14 +818,56 @@ export function ItemsTable({
         }
         confirmLabel="Delete"
         variant="danger"
+        confirmDisabled={
+          isSuperAdmin &&
+          (deleteSummary === null ||
+            deleteSummary.activeCount > 0 ||
+            confirmName.trim() !== (deleteTarget?.name ?? ""))
+        }
         onConfirm={() => {
           if (deleteTarget) {
             const id = deleteTarget.id;
-            run(() => deleteItemAction(id), "Item deleted");
+            if (isSuperAdmin) {
+              const typed = confirmName;
+              run(() => forceDeleteItemAction(id, typed), "Item deleted");
+            } else {
+              run(() => deleteItemAction(id), "Item deleted");
+            }
           }
           setDeleteTarget(null);
         }}
-      />
+      >
+        {isSuperAdmin && deleteTarget ? (
+          <div className="space-y-3 text-sm text-gray-700">
+            {deleteSummary === null ? (
+              <p>Checking borrow history…</p>
+            ) : deleteSummary.activeCount > 0 ? (
+              <p className="text-red-700">
+                This item has {deleteSummary.activeCount} active borrowing(s).
+                It cannot be deleted until they are returned or cancelled.
+              </p>
+            ) : (
+              <p>
+                This also permanently deletes its{" "}
+                {deleteSummary.historyCount} borrow record(s). This cannot be
+                undone.
+              </p>
+            )}
+            <div className="space-y-1">
+              <label htmlFor="confirm-item-name" className="font-medium">
+                Type the item name to confirm
+              </label>
+              <Input
+                id="confirm-item-name"
+                value={confirmName}
+                onChange={(event) => setConfirmName(event.target.value)}
+                placeholder={deleteTarget.name}
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        ) : null}
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={bulkDeleteOpen}

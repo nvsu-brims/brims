@@ -12,6 +12,11 @@ import {
   type ItemStatus,
 } from "@/lib/repositories/inventory";
 import { logActivity } from "@/lib/repositories/activity-logs";
+import {
+  forceDeleteItem,
+  getItemDeleteSummary,
+  type ItemDeleteSummary,
+} from "@/lib/repositories/inventory";
 import { autoRejectPendingRequestsForItem } from "@/lib/repositories/borrowings";
 import { notifyRequestsAutoRejected } from "@/lib/email/notify";
 import {
@@ -356,5 +361,64 @@ export async function deleteItemsAction(ids: number[]): Promise<ItemActionResult
     };
   }
 
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Super-admin-only permanent delete (Plan 3). Office admins never reach these.
+// ---------------------------------------------------------------------------
+
+const SUPER_ADMIN_ONLY = "Only a super admin can do this.";
+
+/** Super admin: how many borrow records the item has, and how many are active. */
+export async function getItemDeleteSummaryAction(
+  id: number
+): Promise<{ ok: true; summary: ItemDeleteSummary } | { ok: false; error: string }> {
+  const gate = await requireAdminAction("You are not allowed to manage items.");
+  if (!gate.ok) return gate;
+  if (gate.caller.office !== null) return { ok: false, error: SUPER_ADMIN_ONLY };
+  return { ok: true, summary: await getItemDeleteSummary(id) };
+}
+
+/**
+ * Super admin: delete an item AND its borrow history. The typed name must match
+ * the item name, and the delete is refused while any borrowing is still active.
+ */
+export async function forceDeleteItemAction(
+  id: number,
+  confirmName: string
+): Promise<ItemActionResult> {
+  const gate = await requireAdminAction("You are not allowed to manage items.");
+  if (!gate.ok) return gate;
+  const { caller } = gate;
+  if (caller.office !== null) return { ok: false, error: SUPER_ADMIN_ONLY };
+
+  const result = await forceDeleteItem(id, confirmName);
+  if (result.status === "not_found") {
+    return { ok: false, error: "Item not found." };
+  }
+  if (result.status === "name_mismatch") {
+    return { ok: false, error: "The name you typed does not match this item." };
+  }
+  if (result.status === "active_borrowings") {
+    return {
+      ok: false,
+      error: `This item has ${result.activeCount} active borrowing(s). It can be deleted once they are returned or cancelled.`,
+    };
+  }
+
+  // The row and its history are gone; remove the picture too (best-effort).
+  await deleteItemImageByUrl(result.imageUrl);
+
+  await logActivity({
+    userId: caller.id,
+    action: "item_deleted",
+    entityType: "item",
+    entityId: id,
+    description: `Super admin permanently deleted "${result.itemName}" and its ${result.historyRemoved} borrow record(s).`,
+    office: result.itemOffice,
+  });
+
+  revalidateItemPaths();
   return { ok: true };
 }

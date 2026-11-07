@@ -304,6 +304,69 @@ export async function deleteItem(
   return deleted !== null ? gone : { status: "not_found" };
 }
 
+/** Borrow statuses that mean the item is still out or about to go out. */
+const ACTIVE_BORROW_STATUSES = ["pending", "approved", "borrowed", "overdue"];
+
+export type ItemDeleteSummary = { historyCount: number; activeCount: number };
+
+/** How many borrow records an item has, and how many are still active. */
+export async function getItemDeleteSummary(id: number): Promise<ItemDeleteSummary> {
+  const [historyCount, activeCount] = await Promise.all([
+    db.borrowRecord.count({ where: { itemId: id } }),
+    db.borrowRecord.count({
+      where: { itemId: id, status: { in: ACTIVE_BORROW_STATUSES } },
+    }),
+  ]);
+  return { historyCount, activeCount };
+}
+
+export type ForceDeleteResult =
+  | {
+      status: "deleted";
+      itemName: string;
+      itemOffice: Office;
+      imageUrl: string | null;
+      historyRemoved: number;
+    }
+  | { status: "active_borrowings"; itemName: string; activeCount: number }
+  | { status: "name_mismatch"; itemName: string }
+  | { status: "not_found" };
+
+/**
+ * Super admin only (the Server Action checks the role). Deletes an item AND
+ * its borrow history in one transaction. Refused while any borrowing is still
+ * active, and refused unless `confirmName` matches the item's name exactly
+ * (after trimming), so the delete has to be typed on purpose.
+ */
+export async function forceDeleteItem(
+  id: number,
+  confirmName: string
+): Promise<ForceDeleteResult> {
+  const existing = await db.inventoryItem.findFirst({ where: { id } });
+  if (!existing) return { status: "not_found" };
+  if (confirmName.trim() !== existing.name) {
+    return { status: "name_mismatch", itemName: existing.name };
+  }
+
+  const { historyCount, activeCount } = await getItemDeleteSummary(id);
+  if (activeCount > 0) {
+    return { status: "active_borrowings", itemName: existing.name, activeCount };
+  }
+
+  await db.$transaction([
+    db.borrowRecord.deleteMany({ where: { itemId: id } }),
+    db.inventoryItem.delete({ where: { id } }),
+  ]);
+
+  return {
+    status: "deleted",
+    itemName: existing.name,
+    itemOffice: existing.office as Office,
+    imageUrl: existing.image ?? null,
+    historyRemoved: historyCount,
+  };
+}
+
 async function itemHasBorrowRecords(itemId: number): Promise<boolean> {
   const record = await db.borrowRecord.findFirst({ where: { itemId } });
   return record !== null && record !== undefined;
