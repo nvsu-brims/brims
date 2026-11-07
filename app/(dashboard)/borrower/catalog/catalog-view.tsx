@@ -10,6 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormDialogShell } from "@/components/shared/dashboard/form-dialog";
 import { FilterBar } from "@/components/shared/dashboard/filter-bar";
@@ -62,6 +71,19 @@ import { addDaysIso, formatDate, todayIso } from "@/lib/dates";
 // lib/repositories/borrowings.ts).
 // ---------------------------------------------------------------------------
 
+/** Terms and Conditions shown from the request form (Plan 2, section 4). Confirmed. */
+const TERMS_VERSION = "1.0";
+const TERMS_SECTIONS: { title: string; body: string }[] = [
+  { title: "Eligibility", body: "Only approved borrowers may request items. You must sign in with your own account and must not share it." },
+  { title: "Requests and approval", body: "A request is not confirmed until an admin approves it. Do not collect an item before approval is shown in the system." },
+  { title: "Use of items", body: "Use each item only for the purpose you requested. Keep it in good condition and follow any instructions given with it." },
+  { title: "Return", body: "Return each item on or before the return date you chose. You are responsible for it until it is returned and checked by an admin." },
+  { title: "Damage and loss", body: "Report any damage or loss to the office that issued the item as soon as you notice it. You may be charged for repair or replacement." },
+  { title: "Fines", body: "Late return, damage, or loss may result in fines, set by the university's policy. Fines are not calculated by this system." },
+  { title: "Personal data", body: "Your information is handled as described in the Data Privacy Notice shown at sign-up." },
+  { title: "Changes", body: "The Sports Development Office (SDO) and the University Culture and the Arts Office (UCAO) may update these terms. Continued use after an update means you accept the new terms." },
+];
+
 /** A list row plus whether THIS borrower already has a pending request on it. */
 type CatalogItem = InventoryListItem & { hasPendingRequest: boolean };
 
@@ -94,6 +116,9 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
 
   // Borrow request modal state — mirrors #borrowConfirmModal.
   const [borrowDialogOpen, setBorrowDialogOpen] = React.useState(false);
+  // Plan 2: the Terms checkbox gates submission. Not stored anywhere.
+  const [termsAccepted, setTermsAccepted] = React.useState(false);
+  const [termsOpen, setTermsOpen] = React.useState(false);
   const [activeItem, setActiveItem] = React.useState<CatalogItem | null>(
     null
   );
@@ -112,6 +137,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
     setActiveItem(item);
     setReturnDate(defaultReturnDate);
     setDialogError(null);
+    setTermsAccepted(false);
     setBorrowDialogOpen(true);
   }
 
@@ -125,6 +151,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       const result = await submitBorrowRequestAction({
         itemId,
         expectedReturnDate: returnDate,
+        acceptedTerms: termsAccepted,
       });
       if (result.ok) {
         setBorrowDialogOpen(false);
@@ -326,7 +353,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
             <Button
               type="submit"
               form="borrow-request-form"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !termsAccepted}
               className="rounded-md bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? "Submitting..." : "Submit Request"}
@@ -369,9 +396,60 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               An admin will need to approve this before you can pick up
               the item.
             </p>
+
+            <p className="mb-0 text-sm text-muted-foreground">
+              Failing to return an item on time, or returning it damaged,
+              may result in fines.
+            </p>
+
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="borrowTermsAccepted"
+                checked={termsAccepted}
+                onCheckedChange={(value) => setTermsAccepted(value === true)}
+                className="mt-1 size-4 border-gray-400 data-[state=checked]:border-green-700 data-[state=checked]:bg-green-700 data-[state=checked]:text-white"
+              />
+              <Label
+                htmlFor="borrowTermsAccepted"
+                className="text-sm font-normal leading-snug"
+              >
+                I agree to the{" "}
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="font-semibold text-green-700 underline underline-offset-4 hover:text-green-800"
+                >
+                  Terms and Conditions
+                </button>
+                .
+              </Label>
+            </div>
           </div>
         </form>
       </FormDialogShell>
+
+      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+        <DialogContent className="border-gray-200 bg-gray-50 p-8 text-green-900 sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-green-900">
+              Terms and Conditions
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              NVSU-BRIMS Terms and Conditions for Borrowing. Version {TERMS_VERSION}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2 text-sm leading-relaxed text-gray-700">
+            {TERMS_SECTIONS.map((section, index) => (
+              <p key={section.title} className="mb-0">
+                <span className="font-semibold text-green-900">
+                  {index + 1}. {section.title}.
+                </span>{" "}
+                {section.body}
+              </p>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

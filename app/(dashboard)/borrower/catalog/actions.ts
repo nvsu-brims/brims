@@ -27,6 +27,8 @@ export async function submitBorrowRequestAction(
     itemId: number;
     /** "YYYY-MM-DD" from the DatePicker. */
     expectedReturnDate: string;
+    /** Must be true: the borrower ticked the Terms and Conditions box. Not stored. */
+    acceptedTerms: boolean;
   }
 ): Promise<SubmitBorrowRequestResult> {
   const user = await getSession();
@@ -36,6 +38,15 @@ export async function submitBorrowRequestAction(
 
   if (!Number.isInteger(input.itemId) || input.itemId <= 0) {
     return { ok: false, error: "Invalid item." };
+  }
+
+  // Plan 2: the request is refused unless the Terms checkbox was ticked. The
+  // acceptance itself is not stored; this only enforces the gate on the server.
+  if (input.acceptedTerms !== true) {
+    return {
+      ok: false,
+      error: "You must accept the Terms and Conditions to submit a request.",
+    };
   }
 
   if (
