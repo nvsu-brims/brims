@@ -38,6 +38,12 @@ export interface InventoryListItem {
   name: string;
   description: string | null;
   status: ItemStatus;
+  /** Total units owned. */
+  quantity: number;
+  /** Units free to borrow now. */
+  availableQuantity: number;
+  /** Units held for repair (not available). */
+  damagedQuantity: number;
   category: ItemCategory;
   office: Office;
   /** Object-storage URL of the picture, or null (none seeded yet). */
@@ -53,6 +59,9 @@ function toListItem(row: {
   category: string;
   office: string;
   status: string;
+  quantity: number;
+  availableQuantity: number;
+  damagedQuantity: number;
 }): InventoryListItem {
   const office = row.office as Office;
   return {
@@ -60,6 +69,9 @@ function toListItem(row: {
     name: row.name,
     description: row.description,
     status: row.status as ItemStatus,
+    quantity: row.quantity,
+    availableQuantity: row.availableQuantity,
+    damagedQuantity: row.damagedQuantity,
     category: row.category as ItemCategory,
     office,
     imageUrl: row.image,
@@ -146,6 +158,8 @@ export interface NewItem {
   description: string | null;
   office: Office;
   status: ItemStatus;
+  /** Total units owned (at least 1). */
+  quantity: number;
   /** Public Storage URL of the picture; null when there is none. */
   imageUrl: string | null;
 }
@@ -160,6 +174,10 @@ export async function createItem(input: NewItem): Promise<number> {
       category: categoryForOffice(input.office),
       office: input.office,
       status: input.status,
+      quantity: input.quantity,
+      // A new item has no units on loan or damaged, so all of them are available.
+      availableQuantity: input.quantity,
+      damagedQuantity: 0,
     },
   });
   return row.id;
@@ -168,6 +186,8 @@ export async function createItem(input: NewItem): Promise<number> {
 export interface ItemChanges {
   name: string;
   status: ItemStatus;
+  /** New total. Omitted keeps the current total. */
+  quantity?: number;
   /** Only set when a NEW picture was uploaded; undefined keeps the old one. */
   imageUrl?: string | null;
 }
@@ -180,7 +200,9 @@ export type UpdateItemResult =
       previousImageUrl: string | null;
       itemOffice: Office;
     }
-  | { ok: false; crossOfficeBlock?: { itemName: string } };
+  | { ok: false; crossOfficeBlock?: { itemName: string } }
+  /** The new total is below the units already on loan or damaged. */
+  | { ok: false; quantityBelowInUse: { minimum: number } };
 
 export type ItemEditAccess =
   | { ok: true; imageUrl: string | null }
@@ -221,11 +243,28 @@ export async function updateItem(
     return { ok: false, crossOfficeBlock: { itemName: existing.name } };
   }
 
-  const data: { name: string; status: ItemStatus; image?: string | null } = {
+  const data: {
+    name: string;
+    status: ItemStatus;
+    image?: string | null;
+    quantity?: number;
+    availableQuantity?: number;
+  } = {
     name: changes.name,
     status: changes.status,
   };
   if (changes.imageUrl !== undefined) data.image = changes.imageUrl;
+
+  // Units out on loan or damaged. The new total can't go below this, and the
+  // available count moves by the same amount as the total.
+  if (changes.quantity !== undefined) {
+    const inUse = existing.quantity - existing.availableQuantity;
+    if (changes.quantity < inUse) {
+      return { ok: false, quantityBelowInUse: { minimum: inUse } };
+    }
+    data.quantity = changes.quantity;
+    data.availableQuantity = changes.quantity - inUse;
+  }
 
   const updated = await db.inventoryItem
     .update({ where: { id }, data })

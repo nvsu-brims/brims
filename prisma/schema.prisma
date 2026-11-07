@@ -101,6 +101,9 @@ model User {
   approvedRecords BorrowRecord[] @relation("BorrowApprover")
   activityLogs    ActivityLog[]
 
+  // Admins who recorded a unit return (damaged or lost).
+  unitReturnsRecorded BorrowUnitReturn[]
+
   @@map("users")
 }
 
@@ -113,6 +116,10 @@ model InventoryItem {
   category    String
   office      String
   status      String      @default("available")
+  // Total units owned, units free to borrow now, and units held for repair.
+  quantity          Int    @default(1)
+  availableQuantity Int    @default(1) @map("available_quantity")
+  damagedQuantity   Int    @default(0) @map("damaged_quantity")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
@@ -125,6 +132,8 @@ model BorrowRecord {
   id                 Int           @id @default(autoincrement())
   userId             Int           @map("user_id")
   itemId             Int           @map("item_id")
+  // Units requested in this borrow (1 by default).
+  quantity           Int           @default(1)
   status             String        @default("pending")
   requestedAt        DateTime      @default(now()) @map("requested_at")
   // Date only (no time).
@@ -155,6 +164,9 @@ model BorrowRecord {
   @@index([itemId])
   @@index([approvedById])
   @@index([status])
+  // One row per borrowed unit, recorded when the item is returned.
+  unitReturns BorrowUnitReturn[]
+
   @@map("borrow_records")
 }
 
@@ -188,3 +200,19 @@ model ActivityLog {
 // auth_verifications dropped from the schema; `npx prisma db push` will
 // remove those 4 tables from Supabase automatically.
 // ---------------------------------------------------------------------------
+
+// One row per borrowed unit at return. Audit record of its condition.
+model BorrowUnitReturn {
+  id             Int          @id @default(autoincrement())
+  borrowRecordId Int          @map("borrow_record_id")
+  borrowRecord   BorrowRecord @relation(fields: [borrowRecordId], references: [id])
+  unitNo         Int          @map("unit_no")
+  // good | damaged | lost
+  condition      String
+  recordedById   Int?         @map("recorded_by_id")
+  recordedBy     User?        @relation(fields: [recordedById], references: [id])
+  recordedAt     DateTime     @default(now()) @map("recorded_at")
+
+  @@unique([borrowRecordId, unitNo])
+  @@map("borrow_unit_returns")
+}

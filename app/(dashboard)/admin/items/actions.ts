@@ -64,6 +64,10 @@ export async function addItemAction(formData: FormData): Promise<ItemActionResul
   const description = readString(formData, "description").trim();
   const office = readString(formData, "office") as Office;
   const status = readString(formData, "status") as ItemStatus;
+  const quantity = Number(readString(formData, "quantity"));
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100000) {
+    return { ok: false, error: "Item quantity must be a whole number from 1 to 100,000." };
+  }
   const picture = readPicture(formData);
 
   if (!name) return { ok: false, error: "Item name is required." };
@@ -84,6 +88,7 @@ export async function addItemAction(formData: FormData): Promise<ItemActionResul
     description: description || null,
     office,
     status,
+    quantity,
     imageUrl: null,
   });
 
@@ -129,6 +134,10 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
   const id = Number(readString(formData, "id"));
   const name = readString(formData, "name").trim();
   const status = readString(formData, "status") as ItemStatus;
+  const quantity = Number(readString(formData, "quantity"));
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100000) {
+    return { ok: false, error: "Item quantity must be a whole number from 1 to 100,000." };
+  }
   const picture = readPicture(formData);
 
   if (!Number.isInteger(id) || id <= 0) return { ok: false, error: "Item not found." };
@@ -167,12 +176,18 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
 
   const result = await updateItem(
     id,
-    { name, status, ...(newImageUrl ? { imageUrl: newImageUrl } : {}) },
+    { name, status, quantity, ...(newImageUrl ? { imageUrl: newImageUrl } : {}) },
     caller.office
   );
   if (!result.ok) {
     // The DB update didn't happen, so the file just uploaded is unreferenced.
     if (newImageUrl) await deleteItemImageByUrl(newImageUrl);
+    if ("quantityBelowInUse" in result) {
+      return {
+        ok: false,
+        error: `The total cannot be lower than ${result.quantityBelowInUse.minimum}, because that many units are on loan or damaged.`,
+      };
+    }
     if (result.crossOfficeBlock) await logCrossOfficeBlock(result.crossOfficeBlock.itemName);
     return { ok: false, error: "Item not found." };
   }

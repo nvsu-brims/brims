@@ -214,6 +214,7 @@ export function ItemsTable({
     ADD_ITEM_EMPTY.description,
   );
   const [addPicture, setAddPicture] = React.useState<File | null>(null);
+  const [addQuantity, setAddQuantity] = React.useState("1");
   const [addPreviewUrl, setAddPreviewUrl] = React.useState<string | null>(
     null,
   );
@@ -227,6 +228,7 @@ export function ItemsTable({
     setAddName(ADD_ITEM_EMPTY.name);
     setAddOffice(scopedOffice ?? ADD_ITEM_EMPTY.office);
     setAddStatus(ADD_ITEM_EMPTY.status);
+    setAddQuantity("1");
     setAddDescription(ADD_ITEM_EMPTY.description);
     setAddPicture(null);
     setAddPreviewUrl((current) => {
@@ -278,6 +280,7 @@ export function ItemsTable({
     formData.set("description", addDescription);
     formData.set("office", addOffice);
     formData.set("status", addStatus);
+    formData.set("quantity", addQuantity);
     if (addPicture) formData.set("picture", addPicture);
     run(
       () => addItemAction(formData),
@@ -293,6 +296,7 @@ export function ItemsTable({
   );
   const [editName, setEditName] = React.useState("");
   const [editStatus, setEditStatus] = React.useState<ItemStatus>("available");
+  const [editQuantity, setEditQuantity] = React.useState("1");
   const [editPicture, setEditPicture] = React.useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = React.useState<string | null>(
     null,
@@ -313,6 +317,7 @@ export function ItemsTable({
     });
     if (editFileInputRef.current) editFileInputRef.current.value = "";
     setDialogError(null);
+    setEditQuantity(String(row.quantity));
     setEditTarget(row);
   }
 
@@ -347,6 +352,7 @@ export function ItemsTable({
     formData.set("id", String(id));
     formData.set("name", editName);
     formData.set("status", editStatus);
+    formData.set("quantity", editQuantity);
     if (editPicture) formData.set("picture", editPicture);
     run(
       () => editItemAction(formData),
@@ -416,6 +422,16 @@ export function ItemsTable({
       key: "status",
       header: "Status",
       cell: (row) => <StatusBadge status={row.status} fixedWidth />,
+    },
+    {
+      key: "quantity",
+      header: "Quantity",
+      cell: (row) => row.quantity,
+    },
+    {
+      key: "available",
+      header: "Available",
+      cell: (row) => row.availableQuantity,
     },
     {
       key: "actions",
@@ -654,6 +670,18 @@ export function ItemsTable({
                 </Select>
               </FormField>
 
+              <FormField label="Item Quantity" htmlFor="itemQuantity">
+                <Input
+                  id="itemQuantity"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={addQuantity}
+                  onChange={(event) => setAddQuantity(event.target.value)}
+                  className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
+                />
+              </FormField>
+
               <FormField label="Item Picture" htmlFor="itemPicture">
                 <Input
                   ref={addFileInputRef}
@@ -776,6 +804,18 @@ export function ItemsTable({
                   <SelectItem value="unavailable">Unavailable</SelectItem>
                 </SelectContent>
               </Select>
+            </FormField>
+
+            <FormField label="Item Quantity" htmlFor="editItemQuantity">
+              <Input
+                id="editItemQuantity"
+                type="number"
+                min={1}
+                step={1}
+                value={editQuantity}
+                onChange={(event) => setEditQuantity(event.target.value)}
+                className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
+              />
             </FormField>
 
             <FormField label="Item Picture" htmlFor="editPictureInput">
