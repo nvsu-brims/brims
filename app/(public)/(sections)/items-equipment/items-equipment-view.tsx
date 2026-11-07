@@ -64,9 +64,13 @@ const CATEGORY_LABELS: Record<ItemCategory, string> = {
 // Trigger-display labels, including the "all" option — passed explicitly
 // as SelectValue's children so the trigger always shows the human-readable
 // label instead of falling back to the raw snake_case value.
-const STATUS_FILTER_LABELS: Record<ItemStatus | "all", string> = {
+/** Filter values: the three availability states, plus "all". */
+type StatusFilter = ItemStatus | "outofstock" | "all";
+
+const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
   all: "All Status",
   ...STATUS_LABELS,
+  outofstock: "Out of stock",
 };
 
 const CATEGORY_FILTER_LABELS: Record<ItemCategory | "all", string> = {
@@ -74,9 +78,28 @@ const CATEGORY_FILTER_LABELS: Record<ItemCategory | "all", string> = {
   ...CATEGORY_LABELS,
 };
 
+const OUT_OF_STOCK_BADGE_CLASSES = "bg-amber-100 text-amber-700";
+
+/** Badge text: "Available (n)" while units are free, "Out of stock" at zero. */
+function availabilityLabel(item: InventoryListItem): string {
+  if (item.status === "available") {
+    return item.availableQuantity > 0
+      ? `Available (${item.availableQuantity})`
+      : "Out of stock";
+  }
+  return STATUS_LABELS[item.status];
+}
+
+function availabilityBadgeClasses(item: InventoryListItem): string {
+  if (item.status === "available" && item.availableQuantity === 0) {
+    return OUT_OF_STOCK_BADGE_CLASSES;
+  }
+  return STATUS_BADGE_CLASSES[item.status];
+}
+
 export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
   const [search, setSearch] = React.useState("");
-  const [status, setStatus] = React.useState<ItemStatus | "all">("all");
+  const [status, setStatus] = React.useState<StatusFilter>("all");
   const [category, setCategory] = React.useState<ItemCategory | "all">("all");
   const [statusOpen, setStatusOpen] = React.useState(false);
   const [categoryOpen, setCategoryOpen] = React.useState(false);
@@ -96,7 +119,13 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
   const categoryHover = useHoverMenu(setCategoryOpen, isDesktopHover);
 
   const filteredItems = items.filter((item) => {
-    const matchesStatus = status === "all" || item.status === status;
+    const matchesStatus =
+      status === "all" ||
+      (status === "outofstock"
+        ? item.status === "available" && item.availableQuantity === 0
+        : status === "available"
+          ? item.status === "available" && item.availableQuantity > 0
+          : item.status === status);
     const matchesCategory = category === "all" || item.category === category;
     const term = search.trim().toLowerCase();
     const matchesSearch =
@@ -147,7 +176,7 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
               open={statusOpen}
               onOpenChange={setStatusOpen}
               onValueChange={(value) =>
-                setStatus(value as ItemStatus | "all")
+                setStatus(value as StatusFilter)
               }
             >
               <SelectTrigger className="w-full hover:border-emerald-600 hover:ring-2 hover:ring-emerald-600/30 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/30">
@@ -167,7 +196,7 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
               >
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="borrowed">Borrowed</SelectItem>
+                <SelectItem value="outofstock">Out of stock</SelectItem>
                 <SelectItem value="unavailable">Unavailable</SelectItem>
               </SelectContent>
             </Select>
@@ -243,19 +272,19 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
           {filteredItems.map((item) => (
             <Card
               key={item.id}
-              className="h-full rounded-2xl border-0! shadow-md"
+              className="flex h-full flex-col rounded-2xl border-0! shadow-md"
             >
               <CardHeader className="flex flex-row justify-end pb-0">
                 <Badge
                   className={cn(
                     "rounded-full font-semibold",
-                    STATUS_BADGE_CLASSES[item.status]
+                    availabilityBadgeClasses(item)
                   )}
                 >
-                  {STATUS_LABELS[item.status]}
+                  {availabilityLabel(item)}
                 </Badge>
               </CardHeader>
-              <CardContent className="flex flex-col items-center pt-2 text-center">
+              <CardContent className="flex flex-1 flex-col items-center pt-2 text-center">
                 <div className="mb-3 flex size-36 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
                   {item.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
