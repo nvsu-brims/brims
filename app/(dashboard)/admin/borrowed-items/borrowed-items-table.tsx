@@ -92,6 +92,11 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
       className: "md:max-w-[200px] md:truncate",
     },
     {
+      key: "quantity",
+      header: "Quantity",
+      cell: (row) => row.quantity,
+    },
+    {
       key: "status",
       header: "Status",
       cell: (row) => <StatusBadge status={row.status} fixedWidth />,
