@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -425,16 +424,13 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       </FormDialogShell>
 
       <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-        <DialogContent className="border-2 border-gray-300 bg-gray-50 p-8 text-green-900 sm:max-w-2xl">
-          <DialogHeader className="border-b border-gray-300 pb-4">
+        <DialogContent className="border-2 border-gray-300 bg-gray-50 p-0 text-green-900 sm:max-w-2xl">
+          <DialogHeader className="border-b border-gray-300 px-8 py-5">
             <DialogTitle className="text-green-900">
               Terms and Conditions
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
-              NVSU-BRIMS Terms and Conditions for Borrowing. Version {TERMS_VERSION}.
-            </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2 text-sm leading-relaxed text-gray-700">
+          <div className="max-h-[60vh] space-y-4 overflow-y-auto px-8 py-5 text-sm leading-relaxed text-gray-700">
             {TERMS_SECTIONS.map((section, index) => (
               <p key={section.title} className="mb-0">
                 <span className="font-semibold text-green-900">
@@ -443,6 +439,9 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
                 {section.body}
               </p>
             ))}
+          </div>
+          <div className="border-t border-gray-300 px-8 py-4 text-sm text-gray-600">
+            Last updated: Version {TERMS_VERSION}, November 7, 2026
           </div>
         </DialogContent>
       </Dialog>
