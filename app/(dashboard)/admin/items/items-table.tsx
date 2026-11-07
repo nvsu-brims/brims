@@ -929,10 +929,7 @@ export function ItemsTable({
                 undone.
               </p>
             )}
-            <div className="space-y-1.5">
-              <label htmlFor="confirm-item-name" className="font-medium">
-                Type the item name to confirm
-              </label>
+            <FormField label="Type the item name to confirm" htmlFor="confirm-item-name">
               <Input
                 id="confirm-item-name"
                 value={confirmName}
@@ -940,7 +937,7 @@ export function ItemsTable({
                 placeholder={deleteTarget.name}
                 autoComplete="off"
               />
-            </div>
+            </FormField>
           </div>
         ) : null}
       </ConfirmDialog>
