@@ -394,15 +394,11 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
 
             <p className="mb-0 text-sm text-muted-foreground">
               An admin will need to approve this before you can pick up
-              the item.
+              the item. Failing to return an item on time, or returning it
+              damaged, may result in fines.
             </p>
 
-            <p className="mb-0 text-sm text-muted-foreground">
-              Failing to return an item on time, or returning it damaged,
-              may result in fines.
-            </p>
-
-            <div className="flex items-start gap-3">
+            <div className="mt-6 flex items-start gap-3">
               <Checkbox
                 id="borrowTermsAccepted"
                 checked={termsAccepted}
@@ -429,8 +425,8 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       </FormDialogShell>
 
       <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-        <DialogContent className="border-gray-200 bg-gray-50 p-8 text-green-900 sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="border-2 border-gray-300 bg-gray-50 p-8 text-green-900 sm:max-w-2xl">
+          <DialogHeader className="border-b border-gray-300 pb-4">
             <DialogTitle className="text-green-900">
               Terms and Conditions
             </DialogTitle>
