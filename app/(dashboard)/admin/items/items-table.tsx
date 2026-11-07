@@ -591,16 +591,30 @@ export function ItemsTable({
               </p>
             )}
 
-            <FormField label="Item Name" htmlFor="itemName">
-              <Input
-                id="itemName"
-                value={addName}
-                onChange={(e) => setAddName(e.target.value)}
-                placeholder="Enter item name"
-                className={FIELD_FOCUS_RING_CLASSES}
-                required
-              />
-            </FormField>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField label="Item Name" htmlFor="itemName">
+                <Input
+                  id="itemName"
+                  value={addName}
+                  onChange={(e) => setAddName(e.target.value)}
+                  placeholder="Enter item name"
+                  className={FIELD_FOCUS_RING_CLASSES}
+                  required
+                />
+              </FormField>
+
+              <FormField label="Item Quantity" htmlFor="itemQuantity">
+                <Input
+                  id="itemQuantity"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={addQuantity}
+                  onChange={(event) => setAddQuantity(event.target.value)}
+                  className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
+                />
+              </FormField>
+            </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Category is not chosen separately: it follows the office
@@ -670,18 +684,6 @@ export function ItemsTable({
                 </Select>
               </FormField>
 
-              <FormField label="Item Quantity" htmlFor="itemQuantity">
-                <Input
-                  id="itemQuantity"
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={addQuantity}
-                  onChange={(event) => setAddQuantity(event.target.value)}
-                  className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
-                />
-              </FormField>
-
               <FormField label="Item Picture" htmlFor="itemPicture">
                 <Input
                   ref={addFileInputRef}
@@ -691,25 +693,23 @@ export function ItemsTable({
                   onChange={handleAddPictureChange}
                   className={FIELD_FOCUS_RING_CLASSES}
                 />
-                {addPreviewUrl && (
-                  <div className="relative mt-2 w-25">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={addPreviewUrl}
-                      alt="Preview"
-                      className="rounded-lg border border-slate-200 object-cover"
-                    />
+                {addPicture && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-slate-700">
+                    <ImageIcon className="size-3.5 shrink-0" />
+                    <span className="min-w-0 truncate" title={addPicture.name}>
+                      {addPicture.name}
+                    </span>
                     <button
                       type="button"
                       onClick={handleRemoveAddPicture}
                       aria-label="Remove picture"
-                      className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-red-600 text-gray-50 hover:bg-red-700"
+                      className="flex size-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-gray-50 hover:bg-red-700"
                     >
-                      <X className="size-3.5" />
+                      <X className="size-3" />
                     </button>
                   </div>
                 )}
-                {!addPreviewUrl && (
+                {!addPicture && (
                   <p className="flex items-center gap-1 text-xs text-muted-foreground">
                     <ImageIcon className="size-3.5" /> PNG or JPEG
                   </p>
