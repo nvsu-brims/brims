@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Box, Image as ImageIcon, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Box, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -334,6 +334,15 @@ export function ItemsTable({
       return file ? URL.createObjectURL(file) : (editTarget?.imageUrl ?? null);
     });
     setEditPicture(file);
+  };
+
+  const handleRemoveEditPicture = () => {
+    setEditPicture(null);
+    setEditPreviewUrl((current) => {
+      if (current?.startsWith("blob:")) URL.revokeObjectURL(current);
+      return editTarget?.imageUrl ?? null;
+    });
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
   };
 
   const isEditValid = editName.trim().length > 0;
@@ -685,35 +694,43 @@ export function ItemsTable({
               </FormField>
 
               <FormField label="Item Picture" htmlFor="itemPicture">
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="itemPicture"
+                    className={cn(
+                      "flex min-w-0 flex-1 cursor-pointer items-center rounded-md border border-input bg-white px-3 py-2 text-sm",
+                      FIELD_FOCUS_RING_CLASSES
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "min-w-0 truncate",
+                        addPicture ? "text-slate-900" : "text-muted-foreground"
+                      )}
+                      title={addPicture?.name}
+                    >
+                      {addPicture ? addPicture.name : "Choose a picture"}
+                    </span>
+                  </label>
+                  {addPicture && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAddPicture}
+                      aria-label="Remove picture"
+                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-600 text-gray-50 hover:bg-red-700"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
                 <Input
                   ref={addFileInputRef}
                   id="itemPicture"
                   type="file"
                   accept="image/png,image/jpeg"
                   onChange={handleAddPictureChange}
-                  className={FIELD_FOCUS_RING_CLASSES}
+                  className="sr-only"
                 />
-                {addPicture && (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-slate-700">
-                    <ImageIcon className="size-3.5 shrink-0" />
-                    <span className="min-w-0 truncate" title={addPicture.name}>
-                      {addPicture.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleRemoveAddPicture}
-                      aria-label="Remove picture"
-                      className="flex size-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-gray-50 hover:bg-red-700"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </div>
-                )}
-                {!addPicture && (
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <ImageIcon className="size-3.5" /> PNG or JPEG
-                  </p>
-                )}
               </FormField>
             </div>
 
@@ -819,23 +836,42 @@ export function ItemsTable({
             </FormField>
 
             <FormField label="Item Picture" htmlFor="editPictureInput">
-              {editPreviewUrl && (
-                <div className="mb-2 w-25">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={editPreviewUrl}
-                    alt="Current picture"
-                    className="rounded-lg border border-slate-200 object-cover"
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="editPictureInput"
+                  className={cn(
+                    "flex min-w-0 flex-1 cursor-pointer items-center rounded-md border border-input bg-white px-3 py-2 text-sm",
+                    FIELD_FOCUS_RING_CLASSES
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "min-w-0 truncate",
+                      editPicture ? "text-slate-900" : "text-muted-foreground"
+                    )}
+                    title={editPicture?.name}
+                  >
+                    {editPicture ? editPicture.name : "Choose a picture"}
+                  </span>
+                </label>
+                {editPicture && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveEditPicture}
+                    aria-label="Remove picture"
+                    className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-600 text-gray-50 hover:bg-red-700"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
               <Input
                 ref={editFileInputRef}
                 id="editPictureInput"
                 type="file"
                 accept="image/png,image/jpeg"
                 onChange={handleEditPictureChange}
-                className={FIELD_FOCUS_RING_CLASSES}
+                className="sr-only"
               />
               <p className="text-xs text-muted-foreground">
                 Leave empty to keep the current picture.
