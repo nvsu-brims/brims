@@ -29,6 +29,8 @@ export async function submitBorrowRequestAction(
     expectedReturnDate: string;
     /** Must be true: the borrower ticked the Terms and Conditions box. Not stored. */
     acceptedTerms: boolean;
+    /** Units to borrow (1 up to the available quantity). */
+    quantity: number;
   }
 ): Promise<SubmitBorrowRequestResult> {
   const user = await getSession();
@@ -49,6 +51,10 @@ export async function submitBorrowRequestAction(
     };
   }
 
+  if (!Number.isInteger(input.quantity) || input.quantity < 1) {
+    return { ok: false, error: "Quantity must be a whole number of at least 1." };
+  }
+
   if (
     !isValidIsoDate(input.expectedReturnDate) ||
     input.expectedReturnDate <= todayIso()
@@ -60,6 +66,7 @@ export async function submitBorrowRequestAction(
     userId: user.userId,
     itemId: input.itemId,
     expectedReturnDate: input.expectedReturnDate,
+    quantity: input.quantity,
   });
   if (!result.ok) {
     return { ok: false, error: result.error };

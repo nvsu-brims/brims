@@ -69,11 +69,20 @@ export type CreateBorrowRequestResult =
  * `expectedReturnDate` is a `DateString` written as "YYYY-MM-DD". If the
  * contract rejects either, this is the only place to change.
  */
+/** Condition of one borrowed unit at return (Plan 1, D6: per unit). */
+export type UnitCondition = "good" | "damaged" | "lost";
+
+/** Thrown inside a transaction to roll it back with a message for the admin. */
+class ApproveAbort extends Error {}
+class ReturnAbort extends Error {}
+
 export async function createBorrowRequest(input: {
   userId: number;
   itemId: number;
   /** "YYYY-MM-DD", already validated by the caller. */
   expectedReturnDate: string;
+  /** Units requested. Must be 1 up to the item's available quantity. */
+  quantity: number;
 }): Promise<CreateBorrowRequestResult> {
   const item = await db.inventoryItem.findFirst({
     where: { id: input.itemId },
@@ -83,6 +92,21 @@ export async function createBorrowRequest(input: {
     return {
       ok: false,
       error: "That item is no longer available to borrow.",
+    };
+  }
+
+  // Plan 1: no stock is reserved while a request is pending (D1). The check
+  // is against what is free now; approval re-checks it atomically.
+  if (!Number.isInteger(input.quantity) || input.quantity < 1) {
+    return { ok: false, error: "Quantity must be at least 1." };
+  }
+  if (input.quantity > item.availableQuantity) {
+    return {
+      ok: false,
+      error:
+        item.availableQuantity === 0
+          ? "That item is out of stock."
+          : `Only ${item.availableQuantity} unit(s) are available.`,
     };
   }
 
@@ -101,6 +125,7 @@ export async function createBorrowRequest(input: {
       userId: input.userId,
       itemId: input.itemId,
       status: "pending",
+      quantity: input.quantity,
       expectedReturnDate: new Date(`${input.expectedReturnDate}T00:00:00.000Z`),
       dueAt: null,
       approvedAt: null,
@@ -384,6 +409,8 @@ export interface AdminBorrowRow {
   id: number;
   status: BorrowStatus;
   itemId: number;
+  /** Units in this borrow. */
+  quantity: number;
   itemName: string;
   itemOffice: Office;
   borrowerId: number;
@@ -406,6 +433,7 @@ function toAdminRow(
     id: number;
     status: string;
     itemId: number;
+    quantity: number;
     userId: number;
     requestedAt: unknown;
     expectedReturnDate: unknown;
@@ -432,6 +460,7 @@ function toAdminRow(
     // BUG-13: a borrowed item past its due day reads as overdue.
     status: effectiveStatus(record.status, dueAt),
     itemId: record.itemId,
+    quantity: record.quantity,
     itemName: item.name,
     itemOffice: item.office as Office,
     borrowerId: borrower.id,
@@ -470,6 +499,7 @@ async function hydrateAdminRows(records: {
   approvedById: number | null;
   returnedAt: unknown;
   remarks: string | null;
+  quantity: number;
 }[]): Promise<AdminBorrowRow[]> {
   if (records.length === 0) return [];
 
@@ -661,41 +691,49 @@ export async function approveBorrowRequest(
     record.expectedReturnDate ??
     new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
 
-  const updated = await db.borrowRecord
-    .update({
-      where: { id: requestId, status: "pending" },
-      data: {
-        status: "borrowed",
-        approvedAt: new Date().toISOString(),
-        approvedById: adminId,
-        dueAt,
-      },
-    })
-    .catch(() => null);
-  if (updated === null) return { ok: false, error: NO_LONGER_PENDING };
-
-  await db.inventoryItem.update({
-    where: { id: record.itemId },
-    data: { status: "borrowed" },
-  });
-
-  // BUG-12: the item is now `borrowed`, so any OTHER borrower's pending request
-  // for it can no longer be approved (see the item.status check above). Reject
-  // those now, with a reason the borrower sees in their own History, instead of
-  // leaving them stuck as "Request Pending" in the borrower's list, the catalog
-  // and the admin's queue.
-  const autoRejectedCount = await rejectOtherPendingRequestsForItem(
-    record.itemId,
-    requestId,
-    ITEM_BORROWED_REJECT_REASON
-  );
+  // Take the units and mark the request approved in ONE transaction. The
+  // conditional update only succeeds while enough units are free, so two
+  // approvals for the last units can't both go through. If either step fails,
+  // both are rolled back.
+  try {
+    await db.$transaction(async (tx) => {
+      const taken = await tx.inventoryItem.updateMany({
+        where: {
+          id: record.itemId,
+          status: "available",
+          availableQuantity: { gte: record.quantity },
+        },
+        data: { availableQuantity: { decrement: record.quantity } },
+      });
+      if (taken.count === 0) {
+        throw new ApproveAbort(
+          `Not enough units are free for this request (it needs ${record.quantity}).`
+        );
+      }
+      const updated = await tx.borrowRecord.updateMany({
+        where: { id: requestId, status: "pending" },
+        data: {
+          status: "borrowed",
+          approvedAt: new Date().toISOString(),
+          approvedById: adminId,
+          dueAt,
+        },
+      });
+      if (updated.count === 0) throw new ApproveAbort(NO_LONGER_PENDING);
+    });
+  } catch (error) {
+    if (error instanceof ApproveAbort) return { ok: false, error: error.message };
+    throw error;
+  }
 
   return {
     ok: true,
     itemName: item.name,
     itemOffice: item.office as Office,
     borrowerName: await borrowerNameOf(record.userId),
-    autoRejectedCount,
+    // Other pending requests are no longer auto-rejected: with quantities
+    // they may still fit in the stock that remains.
+    autoRejectedCount: 0,
     itemId: record.itemId,
   };
 }
@@ -845,7 +883,9 @@ export async function autoRejectPendingRequestsForItem(
  */
 export async function markBorrowReturned(
   requestId: number,
-  office: Office | null
+  office: Office | null,
+  adminId: number,
+  conditions: UnitCondition[]
 ): Promise<AdminActionResult> {
   const record = await db.borrowRecord.findFirst({ where: { id: requestId } });
   if (!record || (record.status !== "borrowed" && record.status !== "overdue")) {
@@ -862,18 +902,50 @@ export async function markBorrowReturned(
     };
   }
 
-  const updated = await db.borrowRecord
-    .update({
-      where: { id: requestId },
-      data: { status: "returned", returnedAt: new Date().toISOString() },
-    })
-    .catch(() => null);
-  if (updated === null) return { ok: false, error: NO_LONGER_RETURNABLE };
+  if (conditions.length !== record.quantity) {
+    return {
+      ok: false,
+      error: `Mark each of the ${record.quantity} unit(s) with a condition.`,
+    };
+  }
+  const good = conditions.filter((c) => c === "good").length;
+  const damaged = conditions.filter((c) => c === "damaged").length;
+  const lost = conditions.filter((c) => c === "lost").length;
 
-  await db.inventoryItem.update({
-    where: { id: record.itemId },
-    data: { status: "available" },
-  });
+  try {
+    await db.$transaction(async (tx) => {
+      const updated = await tx.borrowRecord.updateMany({
+        where: { id: requestId, status: { in: ["borrowed", "overdue"] } },
+        data: { status: "returned", returnedAt: new Date().toISOString() },
+      });
+      if (updated.count === 0) throw new ReturnAbort(NO_LONGER_RETURNABLE);
+
+      // One audit row per borrowed unit, kept for reporting.
+      await tx.borrowUnitReturn.createMany({
+        data: conditions.map((condition, index) => ({
+          borrowRecordId: requestId,
+          unitNo: index + 1,
+          condition,
+          recordedById: adminId,
+        })),
+      });
+
+      // Good units go back to stock. Damaged units stay in the total and are
+      // held for repair (they were already out, so available is unchanged).
+      // Lost units leave the total.
+      await tx.inventoryItem.update({
+        where: { id: record.itemId },
+        data: {
+          availableQuantity: { increment: good },
+          damagedQuantity: { increment: damaged },
+          quantity: { decrement: lost },
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof ReturnAbort) return { ok: false, error: error.message };
+    throw error;
+  }
 
   return {
     ok: true,

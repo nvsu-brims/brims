@@ -37,6 +37,15 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
 
   const [markReturnedTarget, setMarkReturnedTarget] =
     React.useState<AdminBorrowRow | null>(null);
+  // One condition per borrowed unit (Plan 1, D6). Starts as Good for each unit.
+  const [unitConditions, setUnitConditions] = React.useState<
+    ("good" | "damaged" | "lost")[]
+  >([]);
+  React.useEffect(() => {
+    setUnitConditions(
+      Array.from({ length: markReturnedTarget?.quantity ?? 0 }, () => "good" as const)
+    );
+  }, [markReturnedTarget]);
 
   function handleConfirmReturn() {
     const target = markReturnedTarget;
@@ -44,7 +53,7 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
     if (!target) return;
 
     startTransition(async () => {
-      const result = await markReturnedAction(target.id);
+      const result = await markReturnedAction(target.id, unitConditions);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -145,7 +154,34 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
         confirmLabel="Mark as Returned"
         variant="success"
         onConfirm={handleConfirmReturn}
-      />
+      >
+        {markReturnedTarget && markReturnedTarget.quantity > 0 ? (
+          <div className="space-y-3 text-sm">
+            {unitConditions.map((condition, index) => (
+              <div key={index} className="flex items-center justify-between gap-3">
+                <label htmlFor={`unit-condition-${index}`} className="font-medium">
+                  Unit {index + 1}
+                </label>
+                <select
+                  id={`unit-condition-${index}`}
+                  value={condition}
+                  onChange={(event) => {
+                    const value = event.target.value as "good" | "damaged" | "lost";
+                    setUnitConditions((previous) =>
+                      previous.map((c, i) => (i === index ? value : c))
+                    );
+                  }}
+                  className="rounded-md border border-input bg-white px-3 py-1.5"
+                >
+                  <option value="good">Good</option>
+                  <option value="damaged">Damaged</option>
+                  <option value="lost">Lost</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </ConfirmDialog>
     </div>
   );
 }

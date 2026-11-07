@@ -117,6 +117,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
   const [borrowDialogOpen, setBorrowDialogOpen] = React.useState(false);
   // Plan 2: the Terms checkbox gates submission. Not stored anywhere.
   const [termsAccepted, setTermsAccepted] = React.useState(false);
+  const [requestQuantity, setRequestQuantity] = React.useState("1");
   const [termsOpen, setTermsOpen] = React.useState(false);
   const [activeItem, setActiveItem] = React.useState<CatalogItem | null>(
     null
@@ -137,8 +138,15 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
     setReturnDate(defaultReturnDate);
     setDialogError(null);
     setTermsAccepted(false);
+    setRequestQuantity("1");
     setBorrowDialogOpen(true);
   }
+
+  const requestQuantityNumber = Number(requestQuantity);
+  const isRequestQuantityValid =
+    Number.isInteger(requestQuantityNumber) &&
+    requestQuantityNumber >= 1 &&
+    requestQuantityNumber <= (activeItem?.availableQuantity ?? 0);
 
   function handleSubmitBorrowRequest(e: React.FormEvent) {
     e.preventDefault();
@@ -151,6 +159,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
         itemId,
         expectedReturnDate: returnDate,
         acceptedTerms: termsAccepted,
+        quantity: requestQuantityNumber,
       });
       if (result.ok) {
         setBorrowDialogOpen(false);
@@ -352,7 +361,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
             <Button
               type="submit"
               form="borrow-request-form"
-              disabled={isSubmitting || !termsAccepted}
+              disabled={isSubmitting || !termsAccepted || !isRequestQuantityValid}
               className="rounded-md bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? "Submitting..." : "Submit Request"}
@@ -390,6 +399,25 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
                 {dialogError}
               </p>
             )}
+
+            <div className="space-y-1.5">
+              <label htmlFor="requestQuantity" className="text-sm font-medium">
+                Quantity
+              </label>
+              <Input
+                id="requestQuantity"
+                type="number"
+                min={1}
+                max={activeItem?.availableQuantity ?? 1}
+                step={1}
+                value={requestQuantity}
+                onChange={(event) => setRequestQuantity(event.target.value)}
+                className="bg-white"
+              />
+              <p className="text-xs text-muted-foreground">
+                Available: {activeItem?.availableQuantity ?? 0}
+              </p>
+            </div>
 
             <p className="mb-0 text-sm text-muted-foreground">
               An admin will need to approve this before you can pick up
