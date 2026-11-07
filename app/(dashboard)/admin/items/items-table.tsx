@@ -929,7 +929,7 @@ export function ItemsTable({
                 undone.
               </p>
             )}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label htmlFor="confirm-item-name" className="font-medium">
                 Type the item name to confirm
               </label>

@@ -24,7 +24,7 @@ export function FormField({
   labelSuffix,
 }: FormFieldProps) {
   return (
-    <div>
+    <div className="space-y-1.5">
       <Label htmlFor={htmlFor} className="text-sm font-semibold text-slate-700">
         {label}
         {labelSuffix}
