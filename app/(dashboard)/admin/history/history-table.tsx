@@ -160,7 +160,7 @@ export function HistoryTable({ history }: HistoryTableProps) {
           FilterBar uses for its "search" variant. At sm+ this reverts to
           the original flex-wrap behavior. See UI-UX Log for the mockups.
         */}
-        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-none sm:flex-wrap sm:gap-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-none sm:flex-wrap sm:items-center sm:gap-2">
           <div
             ref={statusHover.setTriggerRef}
             className="min-w-0 sm:w-44 sm:flex-none"
@@ -198,7 +198,6 @@ export function HistoryTable({ history }: HistoryTableProps) {
               </SelectContent>
             </Select>
           </div>
-        </div>
 
         {/*
           Mobile (below sm): From and To sit side by side, equal width, each
@@ -206,7 +205,6 @@ export function HistoryTable({ history }: HistoryTableProps) {
           sm+ this reverts to the original flex row, each field sized by its
           own DatePicker width.
         */}
-        <div className="grid w-full grid-cols-2 items-start gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           <div className="min-w-0 sm:flex sm:min-w-0 sm:items-center sm:gap-1.5">
             <Label htmlFor="historyDateFrom" className="mb-1.5 block text-sm text-muted-foreground sm:mb-0">
               From
@@ -230,14 +228,14 @@ export function HistoryTable({ history }: HistoryTableProps) {
               className="w-full sm:w-40"
             />
           </div>
-          <div className="min-w-0 sm:w-64 sm:flex-none">
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name..."
-              className={cn("w-full bg-white", FILTER_BAR_CLASSES)}
-            />
-          </div>
+        </div>
+        <div className="min-w-0 w-full sm:ml-auto sm:w-64 sm:flex-none">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name..."
+            className={cn("w-full bg-white", FILTER_BAR_CLASSES)}
+          />
         </div>
       </div>
 
