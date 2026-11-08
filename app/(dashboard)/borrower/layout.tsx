@@ -145,6 +145,20 @@ export default function BorrowerDashboardLayout({
     refetchBorrowedItemsCount();
   }, [refetchBorrowedItemsCount, pathname]);
 
+  // Keep the badges current without a page change: refetch every 30 seconds
+  // and when the tab becomes visible again. Cheap: a count per badge.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") refetchBorrowedItemsCount();
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [refetchBorrowedItemsCount]);
+
   const borrowerNavItems = React.useMemo(
     () => buildBorrowerNavItems(borrowedItemsCount),
     [borrowedItemsCount]

@@ -217,6 +217,24 @@ export default function AdminDashboardLayout({
       window.removeEventListener(PENDING_COUNTS_CHANGED_EVENT, handler);
   }, [refetchSignUpCount, refetchRequestCount, refetchBorrowedItemsCount]);
 
+  // Keep the badges current without a page change: refetch all three every
+  // 30 seconds, and when the tab becomes visible again. Changes made by other
+  // admins or by borrowers then show up without a navigation.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      refetchSignUpCount();
+      refetchRequestCount();
+      refetchBorrowedItemsCount();
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [refetchSignUpCount, refetchRequestCount, refetchBorrowedItemsCount]);
+
   const adminNavItems = React.useMemo(
     () =>
       buildAdminNavItems(
