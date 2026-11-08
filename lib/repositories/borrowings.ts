@@ -1,4 +1,5 @@
 import { db } from "@/prisma/db";
+import type { ExportBorrow } from "@/lib/reports/borrow-history-period";
 import type { Office } from "@/lib/roles";
 import { isPastDue, isoToManilaDate } from "@/lib/dates";
 
@@ -1034,4 +1035,48 @@ export async function markOverdueBorrowRecords(
     });
   }
   return changed;
+}
+
+// ---------------------------------------------------------------------------
+// Borrow history export (Plan 5). Every borrow requested in the period, with
+// only the values stored in the database (D1). Office scope applied here.
+// ---------------------------------------------------------------------------
+
+export async function getBorrowHistoryForExport(
+  office: Office | null,
+  from: Date,
+  to: Date
+): Promise<ExportBorrow[]> {
+  const records = await db.borrowRecord.findMany({
+    where: {
+      requestedAt: { gte: from, lt: to },
+      ...(office ? { item: { office } } : {}),
+    },
+    orderBy: { requestedAt: "asc" },
+    include: {
+      user: {
+        select: { firstName: true, lastName: true, idNumber: true, college: true, organization: true },
+      },
+      item: { select: { name: true, office: true } },
+      approvedBy: { select: { firstName: true, lastName: true } },
+      unitReturns: { orderBy: { unitNo: "asc" }, select: { condition: true } },
+    },
+  });
+
+  return records.map((r) => ({
+    requestedAt: r.requestedAt.toISOString(),
+    approvedAt: r.approvedAt ? new Date(r.approvedAt).toISOString() : null,
+    dueAt: r.dueAt ? new Date(r.dueAt).toISOString() : null,
+    returnedAt: r.returnedAt ? new Date(r.returnedAt).toISOString() : null,
+    borrowerName: `${r.user.firstName} ${r.user.lastName}`,
+    idNumber: r.user.idNumber,
+    college: r.user.college,
+    organization: r.user.organization,
+    itemName: r.item.name,
+    itemOffice: r.item.office,
+    quantity: r.quantity,
+    status: r.status,
+    approvedByName: r.approvedBy ? `${r.approvedBy.firstName} ${r.approvedBy.lastName}` : null,
+    unitConditions: r.unitReturns.map((u) => u.condition),
+  }));
 }

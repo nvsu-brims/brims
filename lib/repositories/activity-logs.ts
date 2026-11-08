@@ -383,7 +383,8 @@ export type ActivityAction =
   | "email_send_failed"
   | "email_recovered"
   | "cross_office_action_blocked"
-  | "unauthorized_page_access";
+  | "unauthorized_page_access"
+  | "history_exported";
 
 export type ActivityEntityType = "item" | "borrow_record" | "user" | "auth";
 
