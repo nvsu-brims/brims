@@ -161,14 +161,6 @@ export function HistoryTable({ history }: HistoryTableProps) {
           the original flex-wrap behavior. See UI-UX Log for the mockups.
         */}
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-none sm:flex-wrap sm:gap-2">
-          <div className="min-w-0 sm:w-64 sm:flex-none">
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name..."
-              className={cn("w-full bg-white", FILTER_BAR_CLASSES)}
-            />
-          </div>
           <div
             ref={statusHover.setTriggerRef}
             className="min-w-0 sm:w-44 sm:flex-none"
@@ -236,6 +228,14 @@ export function HistoryTable({ history }: HistoryTableProps) {
               onChange={setDateTo}
               min={dateFrom || undefined}
               className="w-full sm:w-40"
+            />
+          </div>
+          <div className="min-w-0 sm:w-64 sm:flex-none">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by name..."
+              className={cn("w-full bg-white", FILTER_BAR_CLASSES)}
             />
           </div>
         </div>
