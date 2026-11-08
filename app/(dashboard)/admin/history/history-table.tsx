@@ -23,6 +23,7 @@ import {
 import { DatePicker } from "@/components/shared/dashboard/date-picker";
 import { formatDate, isoToManilaDate } from "@/lib/dates";
 import { FILTER_BAR_CLASSES } from "@/components/shared/dashboard/form-field";
+import { Input } from "@/components/ui/input";
 import type { AdminBorrowRow } from "@/lib/repositories/borrowings";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useHoverMenu } from "@/hooks/use-hover-menu";
@@ -62,13 +63,17 @@ export function HistoryTable({ history }: HistoryTableProps) {
   const [statusOpen, setStatusOpen] = React.useState(false);
   const [dateFrom, setDateFrom] = React.useState("");
   const [dateTo, setDateTo] = React.useState("");
+  const [search, setSearch] = React.useState("");
 
   const filteredHistory = history.filter((row) => {
     const matchesStatus = status === "all" || row.status === status;
     const approvedDate = row.approvedAt ? isoToManilaDate(row.approvedAt) : null;
     const matchesFrom = !dateFrom || (approvedDate && approvedDate >= dateFrom);
     const matchesTo = !dateTo || (approvedDate && approvedDate <= dateTo);
-    return matchesStatus && matchesFrom && matchesTo;
+    const matchesSearch =
+      !search.trim() ||
+      row.borrowerName.toLowerCase().includes(search.trim().toLowerCase());
+    return matchesStatus && matchesFrom && matchesTo && matchesSearch;
   });
 
   const columns: DataTableColumn<AdminBorrowRow>[] = [
@@ -156,6 +161,14 @@ export function HistoryTable({ history }: HistoryTableProps) {
           the original flex-wrap behavior. See UI-UX Log for the mockups.
         */}
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-none sm:flex-wrap sm:gap-2">
+          <div className="min-w-0 sm:w-64 sm:flex-none">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by name..."
+              className={cn("w-full bg-white", FILTER_BAR_CLASSES)}
+            />
+          </div>
           <div
             ref={statusHover.setTriggerRef}
             className="min-w-0 sm:w-44 sm:flex-none"
