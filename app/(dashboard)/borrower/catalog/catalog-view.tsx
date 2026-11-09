@@ -419,14 +419,6 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               </FormField>
             </div>
 
-            <FormField label="Borrowed Item" htmlFor="borrowedItemName">
-              <Input
-                id="borrowedItemName"
-                value={activeItem?.name ?? ""}
-                readOnly
-                disabled
-              />
-            </FormField>
 
             {dialogError && (
               <p
@@ -437,23 +429,34 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               </p>
             )}
 
-            <div className="space-y-1.5">
-              <label htmlFor="requestQuantity" className="text-sm font-medium">
-                Quantity
-              </label>
-              <Input
-                id="requestQuantity"
-                type="number"
-                min={1}
-                max={activeItem?.availableQuantity ?? 1}
-                step={1}
-                value={requestQuantity}
-                onChange={(event) => setRequestQuantity(event.target.value)}
-                className="bg-white"
-              />
-              <p className="text-xs text-muted-foreground">
-                Available: {activeItem?.availableQuantity ?? 0}
-              </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField label="Borrowed Item" htmlFor="borrowedItemName">
+                <Input
+                  id="borrowedItemName"
+                  value={activeItem?.name ?? ""}
+                  readOnly
+                  disabled
+                />
+              </FormField>
+
+              <div className="space-y-1.5">
+                <label htmlFor="requestQuantity" className="text-sm font-medium">
+                  Quantity
+                </label>
+                <Input
+                  id="requestQuantity"
+                  type="number"
+                  min={1}
+                  max={activeItem?.availableQuantity ?? 1}
+                  step={1}
+                  value={requestQuantity}
+                  onChange={(event) => setRequestQuantity(event.target.value)}
+                  className="bg-white"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Available: {activeItem?.availableQuantity ?? 0}
+                </p>
+              </div>
             </div>
 
             <p className="mb-0 text-sm text-muted-foreground">
