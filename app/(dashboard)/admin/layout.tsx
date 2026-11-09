@@ -12,7 +12,8 @@ import {
   UserCheck,
   ClipboardList,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { DashboardLoading } from "@/components/shared/dashboard/dashboard-loading";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -299,7 +300,9 @@ export default function AdminDashboardLayout({
           profile={adminProfile}
           onSignOut={handleSignOut}
         />
-        <main className="flex flex-1 flex-col p-4 md:p-6">{children}</main>
+        <main className="flex flex-1 flex-col p-4 md:p-6">
+          <Suspense fallback={<DashboardLoading />}>{children}</Suspense>
+        </main>
       </div>
     </div>
   );

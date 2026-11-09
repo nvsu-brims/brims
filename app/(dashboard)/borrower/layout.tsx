@@ -3,7 +3,8 @@
 import * as React from "react";
 import type { ReactNode } from "react";
 import { Home, LayoutGrid, Hourglass, Package, History } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { DashboardLoading } from "@/components/shared/dashboard/dashboard-loading";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -212,7 +213,9 @@ export default function BorrowerDashboardLayout({
           profile={borrowerProfile}
           onSignOut={handleSignOut}
         />
-        <main className="flex flex-1 flex-col p-4 md:p-6">{children}</main>
+        <main className="flex flex-1 flex-col p-4 md:p-6">
+          <Suspense fallback={<DashboardLoading />}>{children}</Suspense>
+        </main>
       </div>
     </div>
   );
