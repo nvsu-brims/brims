@@ -461,29 +461,12 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div
-                role="note"
-                className="flex items-start gap-3 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-              >
-                <p className="mb-0">
-                  An admin will need to approve this before you can pick up
-                  the item. Failing to return an item on time, or returning it
-                  damaged, may result in fines.
-                </p>
-              </div>
-
-              {activeItem?.office === "culture_arts" ? (
-                <div
-                  role="note"
-                  className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-                >
-                  <p className="mb-0">
-                    UCAO items require a cash deposit before borrowing. Pay it in
-                    person when you pick up the item.
-                  </p>
-                </div>
-              ) : null}
+            <div
+              role="note"
+              className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900"
+            >
+              Requires admin approval before pickup. Late return, damage, or loss
+              may result in fines. Pay the cash deposit in person at pickup.
             </div>
 
             <div className="mt-6 flex items-start gap-3">
