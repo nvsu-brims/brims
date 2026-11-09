@@ -215,6 +215,7 @@ export function ItemsTable({
   );
   const [addPicture, setAddPicture] = React.useState<File | null>(null);
   const [addQuantity, setAddQuantity] = React.useState("1");
+  const [addDeposit, setAddDeposit] = React.useState("");
   const [addPreviewUrl, setAddPreviewUrl] = React.useState<string | null>(
     null,
   );
@@ -229,6 +230,7 @@ export function ItemsTable({
     setAddOffice(scopedOffice ?? ADD_ITEM_EMPTY.office);
     setAddStatus(ADD_ITEM_EMPTY.status);
     setAddQuantity("1");
+    setAddDeposit("");
     setAddDescription(ADD_ITEM_EMPTY.description);
     setAddPicture(null);
     setAddPreviewUrl((current) => {
@@ -281,6 +283,7 @@ export function ItemsTable({
     formData.set("office", addOffice);
     formData.set("status", addStatus);
     formData.set("quantity", addQuantity);
+    formData.set("cashDeposit", addDeposit);
     if (addPicture) formData.set("picture", addPicture);
     run(
       () => addItemAction(formData),
@@ -297,6 +300,7 @@ export function ItemsTable({
   const [editName, setEditName] = React.useState("");
   const [editStatus, setEditStatus] = React.useState<ItemStatus>("available");
   const [editQuantity, setEditQuantity] = React.useState("1");
+  const [editDeposit, setEditDeposit] = React.useState("");
   const [editPicture, setEditPicture] = React.useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = React.useState<string | null>(
     null,
@@ -318,6 +322,7 @@ export function ItemsTable({
     if (editFileInputRef.current) editFileInputRef.current.value = "";
     setDialogError(null);
     setEditQuantity(String(row.quantity));
+    setEditDeposit(row.cashDeposit != null ? String(row.cashDeposit) : "");
     setEditTarget(row);
   }
 
@@ -362,6 +367,7 @@ export function ItemsTable({
     formData.set("name", editName);
     formData.set("status", editStatus);
     formData.set("quantity", editQuantity);
+    formData.set("cashDeposit", editDeposit);
     if (editPicture) formData.set("picture", editPicture);
     run(
       () => editItemAction(formData),
@@ -734,6 +740,22 @@ export function ItemsTable({
               </FormField>
             </div>
 
+            <div className="sm:col-span-2">
+              <FormField label="Cash Deposit (PHP)" htmlFor="cashDeposit">
+                <Input
+                  id="cashDeposit"
+                  type="number"
+                  min={200}
+                  step="0.01"
+                  required
+                  value={addDeposit}
+                  onChange={(event) => setAddDeposit(event.target.value)}
+                  placeholder="Minimum 200.00 per unit"
+                  className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
+                />
+              </FormField>
+            </div>
+
             <FormField label="Item Description" htmlFor="description">
               <Textarea
                 id="description"
@@ -822,6 +844,22 @@ export function ItemsTable({
                 </SelectContent>
               </Select>
             </FormField>
+
+            <div className="sm:col-span-2">
+              <FormField label="Cash Deposit (PHP)" htmlFor="editCashDeposit">
+                <Input
+                  id="editCashDeposit"
+                  type="number"
+                  min={200}
+                  step="0.01"
+                  required
+                  value={editDeposit}
+                  onChange={(event) => setEditDeposit(event.target.value)}
+                  placeholder="Minimum 200.00 per unit"
+                  className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
+                />
+              </FormField>
+            </div>
 
             <FormField label="Item Quantity" htmlFor="editItemQuantity">
               <Input

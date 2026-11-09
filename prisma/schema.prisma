@@ -120,6 +120,8 @@ model InventoryItem {
   quantity          Int    @default(1)
   availableQuantity Int    @default(1) @map("available_quantity")
   damagedQuantity   Int    @default(0) @map("damaged_quantity")
+  // Cash deposit per unit, PHP. Required for every item (min 200.00). Null = not set.
+  cashDeposit       Decimal? @db.Decimal(10, 2) @map("cash_deposit")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
@@ -134,6 +136,9 @@ model BorrowRecord {
   itemId             Int           @map("item_id")
   // Units requested in this borrow (1 by default).
   quantity           Int           @default(1)
+  // Deposit snapshot taken when the request is made (C5). Null for old rows.
+  depositPerUnit    Decimal?      @db.Decimal(10, 2) @map("deposit_per_unit")
+  depositTotal      Decimal?      @db.Decimal(10, 2) @map("deposit_total")
   status             String        @default("pending")
   requestedAt        DateTime      @default(now()) @map("requested_at")
   // Date only (no time).

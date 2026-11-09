@@ -17,7 +17,7 @@ import {
 import { ConfirmDialog } from "@/components/shared/dashboard/confirm-dialog";
 import { FilterBar } from "@/components/shared/dashboard/filter-bar";
 import { cn } from "@/lib/utils";
-import { FILTER_BAR_CLASSES } from "@/components/shared/dashboard/form-field";
+import { FILTER_BAR_CLASSES, FormField } from "@/components/shared/dashboard/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -46,6 +46,8 @@ interface ActionTarget {
   id: number;
   borrowerName: string;
   itemName: string;
+  /** Only the approval dialog shows the deposit (reject does not need it). */
+  depositTotal?: number | null;
 }
 
 export function RequestsTable({ requests }: RequestsTableProps) {
@@ -161,6 +163,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                     id: row.id,
                     borrowerName: row.borrowerName,
                     itemName: row.itemName,
+                    depositTotal: row.depositTotal,
                   })
                 }
               >
@@ -254,7 +257,22 @@ export function RequestsTable({ requests }: RequestsTableProps) {
           if (!target) return;
           run(() => approveRequestAction(target.id), "Request approved");
         }}
-      />
+      >
+        {approveTarget ? (
+          <FormField label="Cash Deposit" htmlFor="approveCashDeposit">
+            <Input
+              id="approveCashDeposit"
+              readOnly
+              disabled
+              value={
+                approveTarget.depositTotal == null
+                  ? "Not recorded"
+                  : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(approveTarget.depositTotal)
+              }
+            />
+          </FormField>
+        ) : null}
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={rejectTarget !== null}

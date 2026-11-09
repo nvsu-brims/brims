@@ -167,6 +167,17 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
     requestQuantityNumber >= 1 &&
     requestQuantityNumber <= (activeItem?.availableQuantity ?? 0);
 
+  const depositTotal =
+    activeItem?.cashDeposit != null && isRequestQuantityValid
+      ? activeItem.cashDeposit * requestQuantityNumber
+      : null;
+  const depositDisplay =
+    activeItem?.cashDeposit == null
+      ? "Deposit not set"
+      : depositTotal == null
+        ? "—"
+        : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(depositTotal);
+
   function handleSubmitBorrowRequest(e: React.FormEvent) {
     e.preventDefault();
     if (!activeItem || isSubmitting) return;
@@ -387,7 +398,12 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
             <Button
               type="submit"
               form="borrow-request-form"
-              disabled={isSubmitting || !termsAccepted || !isRequestQuantityValid}
+              disabled={
+              isSubmitting ||
+              !termsAccepted ||
+              !isRequestQuantityValid ||
+              activeItem?.cashDeposit == null
+            }
               className="rounded-md bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? "Submitting..." : "Submit Request"}
@@ -461,12 +477,16 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               </div>
             </div>
 
+            <FormField label="Cash Deposit" htmlFor="cashDepositTotal">
+              <Input id="cashDepositTotal" value={depositDisplay} readOnly disabled />
+            </FormField>
+
             <div
               role="note"
               className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900"
             >
               Requires admin approval before pickup. Late return, damage, or loss
-              may result in fines. Pay the cash deposit in person at pickup.
+              may result in fines. Pay the cash deposit in person at pickup. Deposits are refunded once the item is returned.
             </div>
 
             <div className="mt-6 flex items-start gap-3">

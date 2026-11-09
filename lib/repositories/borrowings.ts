@@ -111,6 +111,17 @@ export async function createBorrowRequest(input: {
     };
   }
 
+  // Cash deposit (C3, C4, C5): the item must have one set. The per-unit amount
+  // and the total for this quantity are stored on the request as a snapshot.
+  if (item.cashDeposit == null) {
+    return {
+      ok: false,
+      error: "This item has no cash deposit set yet, so it cannot be requested.",
+    };
+  }
+  const depositPerUnit = Math.round(Number(item.cashDeposit.toString()) * 100) / 100;
+  const depositTotal = Math.round(depositPerUnit * input.quantity * 100) / 100;
+
   const alreadyPending = await db.borrowRecord.findFirst({
     where: { userId: input.userId, itemId: input.itemId, status: "pending" },
   });
@@ -127,6 +138,8 @@ export async function createBorrowRequest(input: {
       itemId: input.itemId,
       status: "pending",
       quantity: input.quantity,
+      depositPerUnit,
+      depositTotal,
       expectedReturnDate: new Date(`${input.expectedReturnDate}T00:00:00.000Z`),
       dueAt: null,
       approvedAt: null,
@@ -197,6 +210,10 @@ export interface BorrowerBorrowRow {
   itemId: number;
   /** Units in this borrow. */
   quantity: number;
+  /** Borrower's college (same for every row of one borrower). */
+  college: string | null;
+  /** Cash deposit total for this request, PHP. Null when not recorded. */
+  depositTotal: number | null;
   itemName: string;
   itemOffice: Office;
   requestedAt: string;
@@ -278,6 +295,8 @@ export async function getBorrowerHomeStats(
     where: { userId },
     orderBy: [{ requestedAt: "desc" }, { id: "desc" }],
   });
+  const borrowerCollege =
+    (await db.user.findUnique({ where: { id: userId }, select: { college: true } }))?.college ?? null;
 
   const stats: BorrowerHomeStats = {
     pendingRequests: [],
@@ -318,6 +337,8 @@ export async function getBorrowerHomeStats(
       status: effectiveStatus(record.status, dueAt),
       itemId: record.itemId,
       quantity: record.quantity,
+      college: borrowerCollege,
+      depositTotal: record.depositTotal == null ? null : Number(record.depositTotal.toString()),
       itemName: item.name,
       itemOffice: item.office as Office,
       requestedAt: toIso(record.requestedAt) ?? "",
@@ -415,6 +436,8 @@ export interface AdminBorrowRow {
   itemId: number;
   /** Units in this borrow. */
   quantity: number;
+  /** Cash deposit total for this request, PHP. Null when not recorded. */
+  depositTotal: number | null;
   itemName: string;
   itemOffice: Office;
   borrowerId: number;
@@ -438,6 +461,8 @@ function toAdminRow(
     status: string;
     itemId: number;
     quantity: number;
+    /** Optional: queries that don't select the deposit leave it out. */
+    depositTotal?: { toString(): string } | null;
     userId: number;
     requestedAt: unknown;
     expectedReturnDate: unknown;
@@ -465,6 +490,7 @@ function toAdminRow(
     status: effectiveStatus(record.status, dueAt),
     itemId: record.itemId,
     quantity: record.quantity,
+    depositTotal: record.depositTotal == null ? null : Number(record.depositTotal.toString()),
     itemName: item.name,
     itemOffice: item.office as Office,
     borrowerId: borrower.id,
@@ -618,6 +644,8 @@ export type AdminActionResult =
       autoRejectedCount?: number;
       /** Set only by approveBorrowRequest (BUG-12): the approved request's item id. */
       itemId?: number;
+      /** Set only by approveBorrowRequest (Plan 2 C11): the request's deposit total, PHP. */
+      depositTotal?: number | null;
     }
   /**
    * `crossOfficeBlock` is set only when the PHP's own distinguishing check
@@ -739,6 +767,7 @@ export async function approveBorrowRequest(
     // they may still fit in the stock that remains.
     autoRejectedCount: 0,
     itemId: record.itemId,
+    depositTotal: record.depositTotal == null ? null : Number(record.depositTotal.toString()),
   };
 }
 
@@ -1055,7 +1084,7 @@ export async function getBorrowHistoryForExport(
     orderBy: { requestedAt: "asc" },
     include: {
       user: {
-        select: { firstName: true, lastName: true, idNumber: true, college: true, organization: true },
+        select: { firstName: true, lastName: true, idNumber: true, college: true, organization: true, contactNumber: true, email: true },
       },
       item: { select: { name: true, office: true } },
       approvedBy: { select: { firstName: true, lastName: true } },
@@ -1072,6 +1101,9 @@ export async function getBorrowHistoryForExport(
     idNumber: r.user.idNumber,
     college: r.user.college,
     organization: r.user.organization,
+    contactNumber: r.user.contactNumber,
+    email: r.user.email,
+    depositTotal: r.depositTotal == null ? null : Number(r.depositTotal.toString()),
     itemName: r.item.name,
     itemOffice: r.item.office,
     quantity: r.quantity,

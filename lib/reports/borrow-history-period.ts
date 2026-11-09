@@ -29,6 +29,10 @@ export interface ExportBorrow {
   idNumber: string;
   college: string | null;
   organization: string | null;
+  contactNumber: string | null;
+  email: string | null;
+  /** Cash deposit total for this request, PHP. Null when not recorded. */
+  depositTotal: number | null;
   itemName: string;
   itemOffice: string;
   quantity: number;

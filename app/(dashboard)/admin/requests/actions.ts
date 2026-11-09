@@ -61,7 +61,7 @@ export async function approveRequestAction(
     action: "borrow_approved",
     entityType: "borrow_record",
     entityId: requestId,
-    description: `Approved ${result.borrowerName}'s request to borrow "${result.itemName}".`,
+    description: `Approved ${result.borrowerName}'s request to borrow "${result.itemName}". Cash deposit: ${result.depositTotal == null ? "not recorded" : "PHP " + result.depositTotal.toFixed(2)}.`,
     // The item's office (not the caller's) so the owning office's admins see
     // it even when the super admin did the approving.
     office: result.itemOffice,

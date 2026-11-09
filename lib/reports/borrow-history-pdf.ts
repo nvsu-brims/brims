@@ -46,6 +46,8 @@ export function buildBorrowHistoryPdf(input: BorrowHistoryPdfInput): jsPDF {
   doc.text("Contains personal data. Restricted to authorised administrators.", pageWidth - 10, 31, { align: "right" });
 
   // Summary: status counts and units
+  const depositSum = rows.reduce((sum, r) => sum + (r.depositTotal ?? 0), 0);
+  const depositTotalText = "PHP " + depositSum.toFixed(2);
   const statusRows = STATUS_ORDER.map(([label, key]) => [label, String(rows.filter((r) => r.status === key).length)]);
   const unitsOut = rows
     .filter((r) => UNITS_OUT.includes(r.status))
@@ -63,6 +65,7 @@ export function buildBorrowHistoryPdf(input: BorrowHistoryPdfInput): jsPDF {
       ["Units returned Good", String(conditionCount("good"))],
       ["Units returned Damaged", String(conditionCount("damaged"))],
       ["Units returned Lost", String(conditionCount("lost"))],
+      ["Cash deposits recorded (PHP)", depositTotalText],
     ],
     theme: "grid",
     headStyles: { fillColor: GREEN },
@@ -121,7 +124,7 @@ export function buildBorrowHistoryPdf(input: BorrowHistoryPdfInput): jsPDF {
     startY: 18,
     head: [[
       "Requested", "Approved", "Due", "Returned", "Borrower", "ID number", "College",
-      "Organization", "Item", "Office", "Units", "Status", "Approved by", "Unit conditions",
+      "Organization", "Contact", "Email", "Item", "Office", "Units", "Status", "Approved by", "Deposit", "Unit conditions",
     ]],
     body: rows.map((r) => [
       formatManilaDateTime(r.requestedAt),
@@ -132,11 +135,14 @@ export function buildBorrowHistoryPdf(input: BorrowHistoryPdfInput): jsPDF {
       r.idNumber,
       r.college ?? "",
       r.organization ?? "",
+      r.contactNumber ?? "",
+      r.email ?? "",
       r.itemName,
       OFFICE_LABELS[r.itemOffice] ?? r.itemOffice,
       String(r.quantity),
       r.status,
       r.approvedByName ?? "",
+      r.depositTotal == null ? "" : "PHP " + r.depositTotal.toFixed(2),
       r.unitConditions.map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join(", "),
     ]),
     theme: "striped",

@@ -68,6 +68,10 @@ export async function addItemAction(formData: FormData): Promise<ItemActionResul
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100000) {
     return { ok: false, error: "Item quantity must be a whole number from 1 to 100,000." };
   }
+  const cashDeposit = Number(readString(formData, "cashDeposit"));
+  if (!Number.isFinite(cashDeposit) || cashDeposit < 200 || Math.round(cashDeposit * 100) !== cashDeposit * 100) {
+    return { ok: false, error: "Cash deposit must be at least 200.00 PHP per unit, with up to two decimal places." };
+  }
   const picture = readPicture(formData);
 
   if (!name) return { ok: false, error: "Item name is required." };
@@ -89,6 +93,7 @@ export async function addItemAction(formData: FormData): Promise<ItemActionResul
     office,
     status,
     quantity,
+    cashDeposit,
     imageUrl: null,
   });
 
@@ -102,7 +107,7 @@ export async function addItemAction(formData: FormData): Promise<ItemActionResul
     }
     const saved = await updateItem(
       id,
-      { name, status, imageUrl: uploaded.url },
+      { name, status, cashDeposit, imageUrl: uploaded.url },
       caller.office
     );
     if (!saved.ok) {
@@ -137,6 +142,10 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
   const quantity = Number(readString(formData, "quantity"));
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100000) {
     return { ok: false, error: "Item quantity must be a whole number from 1 to 100,000." };
+  }
+  const cashDeposit = Number(readString(formData, "cashDeposit"));
+  if (!Number.isFinite(cashDeposit) || cashDeposit < 200 || Math.round(cashDeposit * 100) !== cashDeposit * 100) {
+    return { ok: false, error: "Cash deposit must be at least 200.00 PHP per unit, with up to two decimal places." };
   }
   const picture = readPicture(formData);
 
@@ -176,7 +185,7 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
 
   const result = await updateItem(
     id,
-    { name, status, quantity, ...(newImageUrl ? { imageUrl: newImageUrl } : {}) },
+    { name, status, quantity, cashDeposit, ...(newImageUrl ? { imageUrl: newImageUrl } : {}) },
     caller.office
   );
   if (!result.ok) {

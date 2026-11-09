@@ -38,6 +38,8 @@ export interface InventoryListItem {
   name: string;
   description: string | null;
   status: ItemStatus;
+  /** Cash deposit per unit, PHP. Null = not set (C4). */
+  cashDeposit: number | null;
   /** Total units owned. */
   quantity: number;
   /** Units free to borrow now. */
@@ -62,6 +64,7 @@ function toListItem(row: {
   quantity: number;
   availableQuantity: number;
   damagedQuantity: number;
+  cashDeposit: { toString(): string } | null;
 }): InventoryListItem {
   const office = row.office as Office;
   return {
@@ -72,6 +75,7 @@ function toListItem(row: {
     quantity: row.quantity,
     availableQuantity: row.availableQuantity,
     damagedQuantity: row.damagedQuantity,
+    cashDeposit: row.cashDeposit == null ? null : Number(row.cashDeposit.toString()),
     category: row.category as ItemCategory,
     office,
     imageUrl: row.image,
@@ -160,6 +164,8 @@ export interface NewItem {
   status: ItemStatus;
   /** Total units owned (at least 1). */
   quantity: number;
+  /** Cash deposit per unit, PHP (min 200.00). */
+  cashDeposit: number;
   /** Public Storage URL of the picture; null when there is none. */
   imageUrl: string | null;
 }
@@ -175,6 +181,7 @@ export async function createItem(input: NewItem): Promise<number> {
       office: input.office,
       status: input.status,
       quantity: input.quantity,
+      cashDeposit: input.cashDeposit,
       // A new item has no units on loan or damaged, so all of them are available.
       availableQuantity: input.quantity,
       damagedQuantity: 0,
@@ -188,6 +195,8 @@ export interface ItemChanges {
   status: ItemStatus;
   /** New total. Omitted keeps the current total. */
   quantity?: number;
+  /** Cash deposit per unit, PHP (min 200.00). */
+  cashDeposit: number;
   /** Only set when a NEW picture was uploaded; undefined keeps the old one. */
   imageUrl?: string | null;
 }
@@ -249,8 +258,10 @@ export async function updateItem(
     image?: string | null;
     quantity?: number;
     availableQuantity?: number;
+    cashDeposit: number;
   } = {
     name: changes.name,
+    cashDeposit: changes.cashDeposit,
     status: changes.status,
   };
   if (changes.imageUrl !== undefined) data.image = changes.imageUrl;

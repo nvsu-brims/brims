@@ -58,6 +58,19 @@ const columns: DataTableColumn<BorrowHistoryRow>[] = [
     cell: (row) => row.quantity,
   },
   {
+    key: "college",
+    header: "College",
+    cell: (row) => row.college ?? "—",
+  },
+  {
+    key: "depositTotal",
+    header: "Cash Deposit",
+    cell: (row) =>
+      row.depositTotal == null
+        ? "—"
+        : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(row.depositTotal),
+  },
+  {
     key: "status",
     header: "Status",
     cell: (row) => <StatusBadge status={row.status} fixedWidth />,
