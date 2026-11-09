@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Archive, BookOpen, Info } from "lucide-react";
+import { Archive, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -460,22 +460,25 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
             </div>
 
             <div className="space-y-3">
-              <p className="mb-0 text-sm text-muted-foreground">
-                An admin will need to approve this before you can pick up
-                the item. Failing to return an item on time, or returning it
-                damaged, may result in fines.
-              </p>
+              <div
+                role="note"
+                className="flex items-start gap-3 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+              >
+                <p className="mb-0">
+                  An admin will need to approve this before you can pick up
+                  the item. Failing to return an item on time, or returning it
+                  damaged, may result in fines.
+                </p>
+              </div>
 
               {activeItem?.office === "culture_arts" ? (
                 <div
                   role="note"
                   className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                 >
-                  <Info className="mt-0.5 size-4 shrink-0 text-amber-700" />
                   <p className="mb-0">
-                    Items from the University Culture and the Arts Office (UCAO)
-                    require a cash deposit before you can borrow them. You will
-                    pay the deposit in person when you pick up the item.
+                    UCAO items require a cash deposit before borrowing. Pay it in
+                    person when you pick up the item.
                   </p>
                 </div>
               ) : null}
