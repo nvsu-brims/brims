@@ -440,9 +440,14 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               </FormField>
 
               <div className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-2">
                 <label htmlFor="requestQuantity" className="text-sm font-medium">
                   Quantity
                 </label>
+                <span className="text-xs text-muted-foreground">
+                  Available: {activeItem?.availableQuantity ?? 0}
+                </span>
+              </div>
                 <Input
                   id="requestQuantity"
                   type="number"
@@ -453,9 +458,6 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
                   onChange={(event) => setRequestQuantity(event.target.value)}
                   className="bg-white"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Available: {activeItem?.availableQuantity ?? 0}
-                </p>
               </div>
             </div>
 
