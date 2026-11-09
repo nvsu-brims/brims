@@ -68,17 +68,11 @@ function SignInForm() {
   // navigate here once a sign-in succeeds. `replace`, not `push`, so the
   // sign-in page isn't left in the history: Back after signing in would only
   // return here and get bounced to the dashboard again by proxy.ts.
-  // After a successful sign-in the form stops being "pending", but the
-  // dashboard still has to load. `opening` keeps the loading overlay up until
-  // the new page is shown, so the user sees progress the whole time.
-  const [opening, setOpening] = React.useState(false);
   React.useEffect(() => {
     if (state.redirectTo) {
-      setOpening(true);
       router.replace(state.redirectTo);
     }
   }, [state.redirectTo, router]);
-  const loading = pending || opening;
 
   return (
     <div
@@ -170,24 +164,12 @@ function SignInForm() {
 
           <Button
             type="submit"
-            disabled={loading}
+            disabled={pending}
             className="mt-2 w-full rounded-lg bg-gray-50 font-semibold text-green-700 hover:bg-gray-50/90"
           >
-            {pending ? "Signing in..." : opening ? "Opening dashboard..." : "Sign In"}
+            {pending ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-
-        {opening ? (
-          <div
-            role="status"
-            aria-live="polite"
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-green-900/70 backdrop-blur-sm"
-          >
-            <div className="size-12 animate-spin rounded-full border-4 border-gray-50/30 border-t-gray-50" />
-            <p className="text-base font-semibold text-gray-50">Signing you in…</p>
-            <p className="text-sm text-gray-50/80">Loading your dashboard. This can take a moment.</p>
-          </div>
-        ) : null}
 
         <footer className="mt-6 text-center">
           <p className="mb-0 text-sm text-white/70">
