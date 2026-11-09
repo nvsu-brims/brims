@@ -203,7 +203,9 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
     });
   }
 
-  const filteredItems = items.filter((item) => {
+  // Alphabetical, like the public Items & Equipment page.
+  const sortedItems = [...items].sort((a, b) => a.name.localeCompare(b.name));
+  const filteredItems = sortedItems.filter((item) => {
     const matchesStatus = status === "all" || item.status === status;
     const matchesCategory = category === "all" || item.category === category;
     const term = search.trim().toLowerCase();

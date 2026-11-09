@@ -137,6 +137,14 @@ export function RequestsTable({ requests }: RequestsTableProps) {
       cell: (row) => row.quantity,
     },
     {
+      key: "depositTotal",
+      header: "Cash Deposit",
+      cell: (row) =>
+        row.depositTotal == null
+          ? "—"
+          : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(row.depositTotal),
+    },
+    {
       key: "requestedAt",
       header: "Requested",
       cell: (row) => formatDate(row.requestedAt),

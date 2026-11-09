@@ -384,7 +384,8 @@ export type ActivityAction =
   | "email_recovered"
   | "cross_office_action_blocked"
   | "unauthorized_page_access"
-  | "history_exported";
+  | "history_exported"
+  | "item_deposit_changed";
 
 export type ActivityEntityType = "item" | "borrow_record" | "user" | "auth";
 

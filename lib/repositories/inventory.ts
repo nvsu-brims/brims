@@ -207,6 +207,7 @@ export type UpdateItemResult =
       previousName: string;
       previousStatus: string;
       previousImageUrl: string | null;
+      previousCashDeposit: number | null;
       itemOffice: Office;
     }
   | { ok: false; crossOfficeBlock?: { itemName: string } }
@@ -286,6 +287,7 @@ export async function updateItem(
     previousName: existing.name,
     previousStatus: existing.status as string,
     previousImageUrl: existing.image ?? null,
+    previousCashDeposit: existing.cashDeposit == null ? null : Number(existing.cashDeposit.toString()),
     itemOffice: existing.office as Office,
   };
 }

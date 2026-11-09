@@ -208,6 +208,18 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
   }
 
   const renamed = result.previousName !== name;
+  const money = (v: number | null) =>
+    v == null ? "not set" : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(v);
+  if (result.previousCashDeposit !== cashDeposit) {
+    await logActivity({
+      userId: caller.id,
+      action: "item_deposit_changed",
+      entityType: "item",
+      entityId: id,
+      description: `Changed cash deposit of "${name}" from ${money(result.previousCashDeposit)} to ${money(cashDeposit)}.`,
+      office: result.itemOffice,
+    });
+  }
   const statusChanged = result.previousStatus !== status;
   const imageChanged = newImageUrl !== undefined;
 
