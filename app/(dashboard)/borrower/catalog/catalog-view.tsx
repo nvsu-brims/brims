@@ -465,6 +465,14 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               damaged, may result in fines.
             </p>
 
+            {activeItem?.office === "culture_arts" ? (
+              <p className="mb-0 text-sm font-medium text-amber-800">
+                Items from the University Culture and the Arts Office (UCAO)
+                require a cash deposit before you can borrow them. You will pay
+                the deposit in person when you pick up the item.
+              </p>
+            ) : null}
+
             <div className="mt-6 flex items-start gap-3">
               <Checkbox
                 id="borrowTermsAccepted"
