@@ -211,7 +211,7 @@ export function DashboardSidebar({
                   </Link>
                 </SidebarMenuButton>
                 {!collapsed && item.badge ? (
-                  <SidebarMenuBadge className="min-w-5 justify-center rounded-full bg-gray-50 px-1.5 text-green-800 peer-data-[active=true]/menu-button:bg-gray-100 peer-data-[active=true]/menu-button:text-green-800">
+                  <SidebarMenuBadge className="min-w-5 justify-center rounded-full bg-gray-50 px-1.5 text-green-800 peer-data-[active=true]/menu-button:bg-sidebar-accent peer-data-[active=true]/menu-button:text-green-800">
                     {item.badge > 99 ? "99+" : item.badge}
                   </SidebarMenuBadge>
                 ) : null}
