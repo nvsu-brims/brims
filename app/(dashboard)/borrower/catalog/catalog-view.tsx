@@ -372,7 +372,6 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
           if (!open) setDialogError(null);
         }}
         title="Borrow Request Form"
-        description={`Request to borrow "${activeItem?.name}"`}
         size="lg"
         footer={
           <div className="flex items-center justify-end gap-2 px-5 py-4">
@@ -398,23 +397,34 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       >
         <form id="borrow-request-form" onSubmit={handleSubmitBorrowRequest}>
           <div className="space-y-4 px-5 py-4">
-            <FormField label="Request Date" htmlFor="borrowRequestDate">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FormField label="Request Date" htmlFor="borrowRequestDate">
+                <Input
+                  id="borrowRequestDate"
+                  value={requestDateDisplay}
+                  readOnly
+                  disabled
+                />
+              </FormField>
+
+              <FormField label="Return Date" htmlFor="borrowReturnDate">
+                <DatePicker
+                  id="borrowReturnDate"
+                  required
+                  min={minReturnDate}
+                  value={returnDate}
+                  onChange={setReturnDate}
+                  className="w-full"
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Borrowed Item" htmlFor="borrowedItemName">
               <Input
-                id="borrowRequestDate"
-                value={requestDateDisplay}
+                id="borrowedItemName"
+                value={activeItem?.name ?? ""}
                 readOnly
                 disabled
-              />
-            </FormField>
-
-            <FormField label="Return Date" htmlFor="borrowReturnDate">
-              <DatePicker
-                id="borrowReturnDate"
-                required
-                min={minReturnDate}
-                value={returnDate}
-                onChange={setReturnDate}
-                className="w-full"
               />
             </FormField>
 
