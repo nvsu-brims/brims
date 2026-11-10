@@ -58,11 +58,6 @@ const columns: DataTableColumn<BorrowHistoryRow>[] = [
     cell: (row) => row.quantity,
   },
   {
-    key: "college",
-    header: "College",
-    cell: (row) => row.college ?? "—",
-  },
-  {
     key: "depositTotal",
     header: "Cash Deposit",
     cell: (row) =>
