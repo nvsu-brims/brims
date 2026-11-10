@@ -142,6 +142,11 @@ export function RequestsTable({ requests }: RequestsTableProps) {
       cell: (row) => formatDate(row.requestedAt),
     },
     {
+      key: "pickUpDate",
+      header: "Pick-up Date",
+      cell: (row) => (row.pickUpDate ? formatDate(row.pickUpDate) : "—"),
+    },
+    {
       key: "expectedReturn",
       header: "Expected Return",
       cell: (row) => formatDate(row.expectedReturnDate),

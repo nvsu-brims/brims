@@ -143,6 +143,8 @@ model BorrowRecord {
   requestedAt        DateTime      @default(now()) @map("requested_at")
   // Date only (no time).
   expectedReturnDate DateTime?     @db.Date @map("expected_return_date")
+  // Date the item is picked up. Borrow now = request day; reservations = chosen date.
+  pickUpDate         DateTime?     @db.Date @map("pick_up_date")
   dueAt              DateTime?     @map("due_at")
   approvedAt         DateTime?     @map("approved_at")
   approvedById       Int?          @map("approved_by_id")

@@ -35,6 +35,8 @@ interface BorrowedItemRow {
   requestedAt: string;
   /** ISO timestamp set by the admin on approval, or null. */
   dueAt: string | null;
+  /** Date the item is picked up (YYYY-MM-DD), or null. */
+  pickUpDate: string | null;
 }
 
 const columns: DataTableColumn<BorrowedItemRow>[] = [
@@ -64,6 +66,11 @@ const columns: DataTableColumn<BorrowedItemRow>[] = [
     key: "requestedAt",
     header: "Requested",
     cell: (row) => formatDate(row.requestedAt),
+  },
+  {
+    key: "pickUpDate",
+    header: "Pick-up Date",
+    cell: (row) => (row.pickUpDate ? formatDate(row.pickUpDate) : "—"),
   },
   {
     key: "dueAt",

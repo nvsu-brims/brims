@@ -27,6 +27,7 @@ export default async function BorrowedItemsPage() {
                 status: row.status,
                 requestedAt: row.requestedAt,
                 dueAt: row.dueAt,
+                pickUpDate: row.pickUpDate,
               },
             ]
           : []

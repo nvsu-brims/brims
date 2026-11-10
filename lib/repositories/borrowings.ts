@@ -1,7 +1,7 @@
 import { db } from "@/prisma/db";
 import type { ExportBorrow } from "@/lib/reports/borrow-history-period";
 import type { Office } from "@/lib/roles";
-import { isPastDue, isoToManilaDate } from "@/lib/dates";
+import { isPastDue, isoToManilaDate, todayIso } from "@/lib/dates";
 
 // ---------------------------------------------------------------------------
 // Borrowing repository — backed by Prisma (Supabase Postgres). Covers BOTH
@@ -138,6 +138,8 @@ export async function createBorrowRequest(input: {
       itemId: input.itemId,
       status: "pending",
       quantity: input.quantity,
+      // Borrow now: the pick-up is today (Manila). Reservations will set the chosen date.
+      pickUpDate: new Date(`${todayIso()}T00:00:00.000Z`),
       depositPerUnit,
       depositTotal,
       expectedReturnDate: new Date(`${input.expectedReturnDate}T00:00:00.000Z`),
@@ -214,6 +216,8 @@ export interface BorrowerBorrowRow {
   college: string | null;
   /** Cash deposit total for this request, PHP. Null when not recorded. */
   depositTotal: number | null;
+  /** Date the item is picked up (YYYY-MM-DD), or null. */
+  pickUpDate: string | null;
   itemName: string;
   itemOffice: Office;
   requestedAt: string;
@@ -337,6 +341,7 @@ export async function getBorrowerHomeStats(
       status: effectiveStatus(record.status, dueAt),
       itemId: record.itemId,
       quantity: record.quantity,
+      pickUpDate: toIso(record.pickUpDate),
       college: borrowerCollege,
       depositTotal: record.depositTotal == null ? null : Number(record.depositTotal.toString()),
       itemName: item.name,
@@ -438,6 +443,8 @@ export interface AdminBorrowRow {
   quantity: number;
   /** Cash deposit total for this request, PHP. Null when not recorded. */
   depositTotal: number | null;
+  /** Date the item is picked up (YYYY-MM-DD), or null. */
+  pickUpDate: string | null;
   itemName: string;
   itemOffice: Office;
   borrowerId: number;
@@ -463,6 +470,7 @@ function toAdminRow(
     quantity: number;
     /** Optional: queries that don't select the deposit leave it out. */
     depositTotal?: { toString(): string } | null;
+    pickUpDate?: Date | null;
     userId: number;
     requestedAt: unknown;
     expectedReturnDate: unknown;
@@ -490,6 +498,7 @@ function toAdminRow(
     status: effectiveStatus(record.status, dueAt),
     itemId: record.itemId,
     quantity: record.quantity,
+    pickUpDate: toIso(record.pickUpDate),
     depositTotal: record.depositTotal == null ? null : Number(record.depositTotal.toString()),
     itemName: item.name,
     itemOffice: item.office as Office,

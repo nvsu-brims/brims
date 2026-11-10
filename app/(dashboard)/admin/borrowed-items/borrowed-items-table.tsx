@@ -135,6 +135,11 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
       cell: (row) => <StatusBadge status={row.status} fixedWidth />,
     },
     {
+      key: "pickUpDate",
+      header: "Pick-up Date",
+      cell: (row) => (row.pickUpDate ? formatDate(row.pickUpDate) : "—"),
+    },
+    {
       key: "dueAt",
       header: "Due Date",
       cell: (row) => formatDate(row.dueAt),
