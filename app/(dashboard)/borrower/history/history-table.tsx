@@ -50,7 +50,7 @@ const columns: DataTableColumn<BorrowHistoryRow>[] = [
       </div>
     ),
     title: (row) => row.itemName,
-    className: "md:max-w-[220px]",
+    className: "wrap-break-word whitespace-normal md:max-w-[220px]",
   },
   {
     key: "quantity",
