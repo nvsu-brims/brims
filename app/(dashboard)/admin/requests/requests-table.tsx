@@ -107,29 +107,21 @@ export function RequestsTable({ requests }: RequestsTableProps) {
     {
       key: "borrower",
       header: "Borrower",
-      cell: (row) => row.borrowerName,
-    },
-    {
-      key: "idNumber",
-      header: "ID Number",
-      cell: (row) => row.borrowerIdNumber,
-    },
-    {
-      key: "college",
-      header: "College",
-      cell: (row) => row.college ?? "—",
-    },
-    {
-      key: "organization",
-      header: "Organization",
-      cell: (row) => row.organization ?? "—",
+      cell: (row) => (
+        <div className="min-w-0">
+          <p className="wrap-break-word font-medium">{row.borrowerName}</p>
+          <p className="wrap-break-word text-xs text-muted-foreground">
+            {row.borrowerIdNumber} · {row.college ?? "—"} · {row.organization ?? "—"}
+          </p>
+        </div>
+      ),
     },
     {
       key: "item",
       header: "Item",
       cell: (row) => row.itemName,
       title: (row) => row.itemName,
-      className: "md:max-w-[200px] md:truncate",
+      className: "wrap-break-word whitespace-normal",
     },
     {
       key: "quantity",
