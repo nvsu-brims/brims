@@ -205,14 +205,14 @@ export default function BorrowerDashboardLayout({
           onSignOut={handleSignOut}
         />
       </SidebarProvider>
-      <div className="flex min-h-dvh flex-1 flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <DashboardHeader
           navItems={borrowerNavItems}
           brandHref="/borrower"
           profile={borrowerProfile}
           onSignOut={handleSignOut}
         />
-        <main className="flex flex-1 flex-col p-4 md:p-6">{children}</main>
+        <main className="flex min-w-0 flex-1 flex-col p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
