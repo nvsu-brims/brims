@@ -423,7 +423,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       >
         <form id="borrow-request-form" onSubmit={handleSubmitBorrowRequest}>
           <div className="space-y-4 px-5 py-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField label="Request Date" htmlFor="borrowRequestDate">
                 <Input
                   id="borrowRequestDate"
@@ -454,7 +454,6 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
                   className="w-full"
                 />
               </FormField>
-            </div>
 
 
             {dialogError && (
@@ -466,7 +465,6 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               </p>
             )}
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField label="Borrowed Item" htmlFor="borrowedItemName">
                 <Input
                   id="borrowedItemName"
@@ -496,11 +494,10 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
                   className="bg-white"
                 />
               </div>
+              <FormField label="Cash Deposit" htmlFor="cashDepositTotal">
+                <Input id="cashDepositTotal" value={depositDisplay} readOnly disabled />
+              </FormField>
             </div>
-
-            <FormField label="Cash Deposit" htmlFor="cashDepositTotal">
-              <Input id="cashDepositTotal" value={depositDisplay} readOnly disabled />
-            </FormField>
 
             <div
               role="note"
