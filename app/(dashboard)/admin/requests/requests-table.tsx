@@ -48,6 +48,7 @@ interface ActionTarget {
   itemName: string;
   /** Only the approval dialog shows the deposit (reject does not need it). */
   depositTotal?: number | null;
+  pickUpDate?: string | null;
 }
 
 export function RequestsTable({ requests }: RequestsTableProps) {
@@ -169,6 +170,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                     borrowerName: row.borrowerName,
                     itemName: row.itemName,
                     depositTotal: row.depositTotal,
+                    pickUpDate: row.pickUpDate,
                   })
                 }
               >
@@ -264,6 +266,16 @@ export function RequestsTable({ requests }: RequestsTableProps) {
         }}
       >
         {approveTarget ? (
+          <div className="space-y-4">
+          <FormField label="Pick-up Date" htmlFor="approvePickUpDate">
+            <Input
+              id="approvePickUpDate"
+              readOnly
+              disabled
+              value={approveTarget.pickUpDate ? formatDate(approveTarget.pickUpDate) : "Not recorded"}
+            />
+          </FormField>
+
           <FormField label="Cash Deposit" htmlFor="approveCashDeposit">
             <Input
               id="approveCashDeposit"
@@ -276,6 +288,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
               }
             />
           </FormField>
+          </div>
         ) : null}
       </ConfirmDialog>
 

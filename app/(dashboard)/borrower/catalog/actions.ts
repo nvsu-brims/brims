@@ -29,6 +29,8 @@ export async function submitBorrowRequestAction(
     expectedReturnDate: string;
     /** Must be true: the borrower ticked the Terms and Conditions box. Not stored. */
     acceptedTerms: boolean;
+    /** Pick-up date, YYYY-MM-DD: today or later, before the return date. */
+    pickUpDate: string;
     /** Units to borrow (1 up to the available quantity). */
     quantity: number;
   }
@@ -56,6 +58,14 @@ export async function submitBorrowRequestAction(
   }
 
   if (
+    !isValidIsoDate(input.pickUpDate) ||
+    input.pickUpDate < todayIso() ||
+    input.pickUpDate >= input.expectedReturnDate
+  ) {
+    return { ok: false, error: "Choose a pick-up date from today, before the return date." };
+  }
+
+  if (
     !isValidIsoDate(input.expectedReturnDate) ||
     input.expectedReturnDate <= todayIso()
   ) {
@@ -66,6 +76,7 @@ export async function submitBorrowRequestAction(
     userId: user.userId,
     itemId: input.itemId,
     expectedReturnDate: input.expectedReturnDate,
+    pickUpDate: input.pickUpDate,
     quantity: input.quantity,
   });
   if (!result.ok) {

@@ -82,6 +82,8 @@ export async function createBorrowRequest(input: {
   itemId: number;
   /** "YYYY-MM-DD", already validated by the caller. */
   expectedReturnDate: string;
+  /** "YYYY-MM-DD" pick-up date, already validated by the caller. */
+  pickUpDate: string;
   /** Units requested. Must be 1 up to the item's available quantity. */
   quantity: number;
 }): Promise<CreateBorrowRequestResult> {
@@ -139,7 +141,7 @@ export async function createBorrowRequest(input: {
       status: "pending",
       quantity: input.quantity,
       // Borrow now: the pick-up is today (Manila). Reservations will set the chosen date.
-      pickUpDate: new Date(`${todayIso()}T00:00:00.000Z`),
+      pickUpDate: new Date(`${input.pickUpDate}T00:00:00.000Z`),
       depositPerUnit,
       depositTotal,
       expectedReturnDate: new Date(`${input.expectedReturnDate}T00:00:00.000Z`),

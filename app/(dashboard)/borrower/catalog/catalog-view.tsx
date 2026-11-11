@@ -142,6 +142,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
     null
   );
   const [returnDate, setReturnDate] = React.useState("");
+  const [pickUpDate, setPickUpDate] = React.useState("");
 
   // "Today" is Manila's calendar day (lib/dates.ts), the same day the server
   // uses to reject a return date that is not after today, so the earliest date
@@ -178,6 +179,9 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
         ? "—"
         : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(depositTotal);
 
+  const pickUpValue = pickUpDate || today;
+  const isPickUpValid = pickUpValue >= today && (!returnDate || pickUpValue < returnDate);
+
   function handleSubmitBorrowRequest(e: React.FormEvent) {
     e.preventDefault();
     if (!activeItem || isSubmitting) return;
@@ -188,6 +192,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       const result = await submitBorrowRequestAction({
         itemId,
         expectedReturnDate: returnDate,
+        pickUpDate: pickUpValue,
         acceptedTerms: termsAccepted,
         quantity: requestQuantityNumber,
       });
@@ -404,6 +409,7 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               isSubmitting ||
               !termsAccepted ||
               !isRequestQuantityValid ||
+              !isPickUpValid ||
               activeItem?.cashDeposit == null
             }
               className="rounded-md bg-green-600 hover:bg-green-700"
@@ -415,13 +421,24 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
       >
         <form id="borrow-request-form" onSubmit={handleSubmitBorrowRequest}>
           <div className="space-y-4 px-5 py-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <FormField label="Request Date" htmlFor="borrowRequestDate">
                 <Input
                   id="borrowRequestDate"
                   value={requestDateDisplay}
                   readOnly
                   disabled
+                />
+              </FormField>
+
+              <FormField label="Pick-up Date" htmlFor="borrowPickUpDate">
+                <DatePicker
+                  id="borrowPickUpDate"
+                  required
+                  min={today}
+                  value={pickUpValue}
+                  onChange={setPickUpDate}
+                  className="w-full"
                 />
               </FormField>
 
