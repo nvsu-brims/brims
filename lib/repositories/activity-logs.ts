@@ -385,7 +385,9 @@ export type ActivityAction =
   | "cross_office_action_blocked"
   | "unauthorized_page_access"
   | "history_exported"
-  | "item_deposit_changed";
+  | "item_deposit_changed"
+  | "borrow_picked_up"
+  | "borrow_auto_cancelled";
 
 export type ActivityEntityType = "item" | "borrow_record" | "user" | "auth";
 

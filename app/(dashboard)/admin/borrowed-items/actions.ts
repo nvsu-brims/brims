@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { requireAdminAction } from "@/lib/require-admin";
-import { markBorrowReturned } from "@/lib/repositories/borrowings";
+import { markBorrowReturned, markBorrowPickedUp } from "@/lib/repositories/borrowings";
 import { logActivity } from "@/lib/repositories/activity-logs";
 import { notifyItemReturned } from "@/lib/email/notify";
 
@@ -71,5 +71,28 @@ export async function markReturnedAction(
   revalidatePath("/admin/history");
   revalidatePath("/admin");
 
+  return { ok: true };
+}
+
+export async function markPickedUpAction(requestId: number): Promise<BorrowedItemActionResult> {
+  if (!isValidId(requestId)) {
+    return { ok: false, error: "Invalid request." };
+  }
+  const gate = await requireAdminAction("You are not allowed to update borrowed items.");
+  if (!gate.ok) return gate;
+  const { caller } = gate;
+
+  const result = await markBorrowPickedUp(requestId, caller.office);
+  if (!result.ok) return result;
+
+  await logActivity({
+    userId: caller.id,
+    action: "borrow_picked_up",
+    entityType: "borrow_record",
+    entityId: requestId,
+    description: `Marked "${result.itemName}" picked up by ${result.borrowerName}.`,
+    office: result.itemOffice,
+  });
+  revalidatePath("/admin/borrowed-items");
   return { ok: true };
 }

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { markOverdueBorrowRecords } from "@/lib/repositories/borrowings";
+import { markOverdueBorrowRecords, cancelUnpickedBorrows } from "@/lib/repositories/borrowings";
 import { logActivity } from "@/lib/repositories/activity-logs";
 import { sendDailyUnreturnedEmails } from "@/lib/email/notify";
 
@@ -117,8 +117,10 @@ export async function GET(request: NextRequest) {
   }
 
   let changed;
+  let cancelled: Awaited<ReturnType<typeof cancelUnpickedBorrows>> = [];
   try {
     changed = await markOverdueBorrowRecords();
+    cancelled = await cancelUnpickedBorrows();
   } catch (error) {
     console.error("[cron/mark-overdue] job failed:", error);
     return NextResponse.json(
@@ -150,6 +152,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     markedOverdue: changed.length,
+    cancelledUnpicked: cancelled.length,
     emails,
   });
 }

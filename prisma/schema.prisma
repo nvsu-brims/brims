@@ -145,6 +145,8 @@ model BorrowRecord {
   expectedReturnDate DateTime?     @db.Date @map("expected_return_date")
   // Date the item is picked up. Borrow now = request day; reservations = chosen date.
   pickUpDate         DateTime?     @db.Date @map("pick_up_date")
+  // Set when the admin marks the item Picked Up. Null = approved, not collected.
+  pickedUpAt         DateTime?     @map("picked_up_at")
   dueAt              DateTime?     @map("due_at")
   approvedAt         DateTime?     @map("approved_at")
   approvedById       Int?          @map("approved_by_id")

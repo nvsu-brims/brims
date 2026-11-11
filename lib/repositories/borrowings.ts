@@ -338,7 +338,7 @@ export async function getBorrowerHomeStats(
     const row: BorrowerBorrowRow = {
       id: record.id,
       // BUG-13: a borrowed item past its due day reads as overdue.
-      status: effectiveStatus(record.status, dueAt),
+      status: effectiveStatus(record.status, record.pickedUpAt ? dueAt : null),
       itemId: record.itemId,
       quantity: record.quantity,
       pickUpDate: toIso(record.pickUpDate),
@@ -445,6 +445,8 @@ export interface AdminBorrowRow {
   depositTotal: number | null;
   /** Date the item is picked up (YYYY-MM-DD), or null. */
   pickUpDate: string | null;
+  /** When the admin marked the item Picked Up, or null. */
+  pickedUpAt: string | null;
   itemName: string;
   itemOffice: Office;
   borrowerId: number;
@@ -471,6 +473,7 @@ function toAdminRow(
     /** Optional: queries that don't select the deposit leave it out. */
     depositTotal?: { toString(): string } | null;
     pickUpDate?: Date | null;
+    pickedUpAt?: Date | null;
     userId: number;
     requestedAt: unknown;
     expectedReturnDate: unknown;
@@ -495,10 +498,11 @@ function toAdminRow(
   return {
     id: record.id,
     // BUG-13: a borrowed item past its due day reads as overdue.
-    status: effectiveStatus(record.status, dueAt),
+    status: effectiveStatus(record.status, record.pickedUpAt ? dueAt : null),
     itemId: record.itemId,
     quantity: record.quantity,
     pickUpDate: toIso(record.pickUpDate),
+    pickedUpAt: toIso(record.pickedUpAt),
     depositTotal: record.depositTotal == null ? null : Number(record.depositTotal.toString()),
     itemName: item.name,
     itemOffice: item.office as Office,
@@ -957,7 +961,7 @@ export async function markBorrowReturned(
   try {
     await db.$transaction(async (tx) => {
       const updated = await tx.borrowRecord.updateMany({
-        where: { id: requestId, status: { in: ["borrowed", "overdue"] } },
+        where: { id: requestId, status: { in: ["borrowed", "overdue"] }, pickedUpAt: { not: null } },
         data: { status: "returned", returnedAt: new Date().toISOString() },
       });
       if (updated.count === 0) throw new ReturnAbort(NO_LONGER_RETURNABLE);
@@ -1036,7 +1040,7 @@ export async function markOverdueBorrowRecords(
   now: Date = new Date()
 ): Promise<NewlyOverdueRecord[]> {
   const borrowed = await db.borrowRecord.findMany({
-    where: { status: "borrowed" },
+    where: { status: "borrowed", pickedUpAt: { not: null } },
   });
   const late = borrowed.filter((r) => isPastDue(toIso(r.dueAt), now));
   if (late.length === 0) return [];
@@ -1120,4 +1124,80 @@ export async function getBorrowHistoryForExport(
     approvedByName: r.approvedBy ? `${r.approvedBy.firstName} ${r.approvedBy.lastName}` : null,
     unitConditions: r.unitReturns.map((u) => u.condition),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Picked Up and automatic cancellation (Plan 6 R6, R13)
+// ---------------------------------------------------------------------------
+
+export async function markBorrowPickedUp(
+  requestId: number,
+  office: Office | null
+): Promise<{ ok: true; itemName: string; itemOffice: Office; borrowerName: string } | { ok: false; error: string }> {
+  const record = await db.borrowRecord.findFirst({
+    where: { id: requestId },
+    include: {
+      item: { select: { name: true, office: true } },
+      user: { select: { firstName: true, lastName: true } },
+    },
+  });
+  if (!record) return { ok: false, error: "Request not found." };
+  if (office && record.item.office !== office) {
+    return { ok: false, error: "You can only update items from your office." };
+  }
+  const updated = await db.borrowRecord.updateMany({
+    where: { id: requestId, status: "borrowed", pickedUpAt: null },
+    data: { pickedUpAt: new Date() },
+  });
+  if (updated.count === 0) {
+    return { ok: false, error: "This request is already picked up or no longer active." };
+  }
+  return {
+    ok: true,
+    itemName: record.item.name,
+    itemOffice: record.item.office as Office,
+    borrowerName: `${record.user.firstName} ${record.user.lastName}`,
+  };
+}
+
+/**
+ * Daily job (Plan 6 R6): cancels approved requests not picked up by their
+ * pick-up date, and returns their units to stock. Each cancellation is one
+ * transaction, so units are never returned twice.
+ */
+export async function cancelUnpickedBorrows(now: Date = new Date()): Promise<
+  { id: number; itemName: string; itemOffice: Office; borrowerName: string }[]
+> {
+  const startOfToday = new Date(`${todayIso(now)}T00:00:00.000Z`);
+  const stale = await db.borrowRecord.findMany({
+    where: { status: "borrowed", pickedUpAt: null, pickUpDate: { lt: startOfToday } },
+    include: {
+      item: { select: { name: true, office: true } },
+      user: { select: { firstName: true, lastName: true } },
+    },
+  });
+  const cancelled: { id: number; itemName: string; itemOffice: Office; borrowerName: string }[] = [];
+  for (const record of stale) {
+    const done = await db.$transaction(async (tx) => {
+      const flipped = await tx.borrowRecord.updateMany({
+        where: { id: record.id, status: "borrowed", pickedUpAt: null },
+        data: { status: "cancelled" },
+      });
+      if (flipped.count === 0) return false;
+      await tx.inventoryItem.update({
+        where: { id: record.itemId },
+        data: { availableQuantity: { increment: record.quantity } },
+      });
+      return true;
+    });
+    if (done) {
+      cancelled.push({
+        id: record.id,
+        itemName: record.item.name,
+        itemOffice: record.item.office as Office,
+        borrowerName: `${record.user.firstName} ${record.user.lastName}`,
+      });
+    }
+  }
+  return cancelled;
 }

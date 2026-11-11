@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dates";
 import type { AdminBorrowRow } from "@/lib/repositories/borrowings";
-import { markReturnedAction } from "./actions";
+import { markReturnedAction, markPickedUpAction } from "./actions";
 
 // ---------------------------------------------------------------------------
 // Was admin-borrowed-items-page.tsx (a single client page over
@@ -132,7 +132,14 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
     {
       key: "status",
       header: "Status",
-      cell: (row) => <StatusBadge status={row.status} fixedWidth />,
+      cell: (row) =>
+        row.status === "borrowed" && !row.pickedUpAt ? (
+          <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+            Awaiting pick-up
+          </span>
+        ) : (
+          <StatusBadge status={row.status} fixedWidth />
+        ),
     },
     {
       key: "pickUpDate",
@@ -148,16 +155,34 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
       key: "actions",
       header: "Actions",
       cell: (row) => (
-        <div className="flex justify-start">
-          <Button
-            type="button"
-            size="sm"
-            disabled={isPending}
-            className="rounded-md! bg-green-600 hover:bg-green-700"
-            onClick={() => setMarkReturnedTarget(row)}
-          >
-            Mark as Returned
-          </Button>
+        <div className="flex justify-start gap-2">
+          {!row.pickedUpAt ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={isPending}
+              className="rounded-md! bg-blue-600 hover:bg-blue-700"
+              onClick={() =>
+                startTransition(async () => {
+                  const result = await markPickedUpAction(row.id);
+                  if (!result.ok) toast.error(result.error);
+                  else toast.success("Marked as picked up");
+                })
+              }
+            >
+              Picked Up
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              disabled={isPending}
+              className="rounded-md! bg-green-600 hover:bg-green-700"
+              onClick={() => setMarkReturnedTarget(row)}
+            >
+              Returned
+            </Button>
+          )}
         </div>
       ),
     },
