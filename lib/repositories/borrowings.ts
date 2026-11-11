@@ -38,6 +38,7 @@ export type BorrowStatus =
   | "approved"
   | "rejected"
   | "borrowed"
+  | "awaiting_pickup"
   | "returned"
   | "overdue"
   | "cancelled";
@@ -609,6 +610,9 @@ export async function getBorrowedItems(
   const borrowed = await db.borrowRecord.findMany({
     where: { status: "borrowed" },
   });
+  const awaiting = await db.borrowRecord.findMany({
+    where: { status: "awaiting_pickup" },
+  });
   const overdue = await db.borrowRecord.findMany({
     where: { status: "overdue" },
   });
@@ -760,7 +764,7 @@ export async function approveBorrowRequest(
       const updated = await tx.borrowRecord.updateMany({
         where: { id: requestId, status: "pending" },
         data: {
-          status: "borrowed",
+          status: "awaiting_pickup",
           approvedAt: new Date().toISOString(),
           approvedById: adminId,
           dueAt,
@@ -1042,7 +1046,7 @@ export async function markOverdueBorrowRecords(
   now: Date = new Date()
 ): Promise<NewlyOverdueRecord[]> {
   const borrowed = await db.borrowRecord.findMany({
-    where: { status: "borrowed", pickedUpAt: { not: null } },
+    where: { status: "borrowed" },
   });
   const late = borrowed.filter((r) => isPastDue(toIso(r.dueAt), now));
   if (late.length === 0) return [];
@@ -1148,8 +1152,8 @@ export async function markBorrowPickedUp(
     return { ok: false, error: "You can only update items from your office." };
   }
   const updated = await db.borrowRecord.updateMany({
-    where: { id: requestId, status: "borrowed", pickedUpAt: null },
-    data: { pickedUpAt: new Date() },
+    where: { id: requestId, status: "awaiting_pickup" },
+    data: { status: "borrowed", pickedUpAt: new Date() },
   });
   if (updated.count === 0) {
     return { ok: false, error: "This request is already picked up or no longer active." };
@@ -1172,7 +1176,7 @@ export async function cancelUnpickedBorrows(now: Date = new Date()): Promise<
 > {
   const startOfToday = new Date(`${todayIso(now)}T00:00:00.000Z`);
   const stale = await db.borrowRecord.findMany({
-    where: { status: "borrowed", pickedUpAt: null, pickUpDate: { lt: startOfToday } },
+    where: { status: "awaiting_pickup", pickUpDate: { lt: startOfToday } },
     include: {
       item: { select: { name: true, office: true } },
       user: { select: { firstName: true, lastName: true } },
@@ -1182,7 +1186,7 @@ export async function cancelUnpickedBorrows(now: Date = new Date()): Promise<
   for (const record of stale) {
     const done = await db.$transaction(async (tx) => {
       const flipped = await tx.borrowRecord.updateMany({
-        where: { id: record.id, status: "borrowed", pickedUpAt: null },
+        where: { id: record.id, status: "awaiting_pickup" },
         data: { status: "cancelled" },
       });
       if (flipped.count === 0) return false;

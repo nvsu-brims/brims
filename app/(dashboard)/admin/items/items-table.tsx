@@ -97,6 +97,7 @@ const STATUS_LABELS: Record<ItemStatus, string> = {
   available: "Available",
   borrowed: "Borrowed",
   unavailable: "Unavailable",
+  out_of_stock: "Out of stock",
 };
 
 const CATEGORY_LABELS: Record<ItemCategory, string> = {
@@ -695,6 +696,7 @@ export function ItemsTable({
                     <SelectItem value="available">Available</SelectItem>
                     <SelectItem value="borrowed">Borrowed</SelectItem>
                     <SelectItem value="unavailable">Unavailable</SelectItem>
+<SelectItem value="out_of_stock">Out of stock</SelectItem>
                   </SelectContent>
                 </Select>
               </FormField>
@@ -841,6 +843,7 @@ export function ItemsTable({
                   <SelectItem value="available">Available</SelectItem>
                   <SelectItem value="borrowed">Borrowed</SelectItem>
                   <SelectItem value="unavailable">Unavailable</SelectItem>
+<SelectItem value="out_of_stock">Out of stock</SelectItem>
                 </SelectContent>
               </Select>
             </FormField>

@@ -224,7 +224,9 @@ export type BadgeStatus =
   | "overdue"
   | "pending"
   | "approved"
-  | "cancelled";
+  | "cancelled"
+  | "awaiting_pickup"
+  | "out_of_stock";
 
 const STATUS_STYLES: Record<BadgeStatus, { bg: string; text: string }> = {
   available: { bg: "#d1fae5", text: "#065f46" },
@@ -236,6 +238,8 @@ const STATUS_STYLES: Record<BadgeStatus, { bg: string; text: string }> = {
   pending: { bg: "#fef3c7", text: "#92400e" },
   approved: { bg: "#dbeafe", text: "#1e40af" },
   cancelled: { bg: "#f3f4f6", text: "#4b5563" },
+  awaiting_pickup: { bg: "#fef3c7", text: "#92400e" },
+  out_of_stock: { bg: "#ffedd5", text: "#9a3412" },
 };
 
 interface StatusBadgeProps {

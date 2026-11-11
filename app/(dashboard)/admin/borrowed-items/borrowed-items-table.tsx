@@ -133,10 +133,8 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
       key: "status",
       header: "Status",
       cell: (row) =>
-        row.status === "borrowed" && !row.pickedUpAt ? (
-          <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-            Awaiting pick-up
-          </span>
+        row.status === "awaiting_pickup" ? (
+          <StatusBadge status="awaiting_pickup" label="Awaiting pick-up" fixedWidth />
         ) : (
           <StatusBadge status={row.status} fixedWidth />
         ),
@@ -156,7 +154,7 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
       header: "Actions",
       cell: (row) => (
         <div className="flex justify-start gap-2">
-          {!row.pickedUpAt ? (
+          {row.status === "awaiting_pickup" ? (
             <Button
               type="button"
               size="sm"

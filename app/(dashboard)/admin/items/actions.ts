@@ -36,7 +36,7 @@ export type ItemActionResult = { ok: true } | { ok: false; error: string };
 // picture is invalid or the upload fails, the whole add/edit fails and
 // nothing is left half-saved (a just-created row is rolled back).
 
-const ITEM_STATUSES: ItemStatus[] = ["available", "borrowed", "unavailable"];
+const ITEM_STATUSES: ItemStatus[] = ["available", "borrowed", "unavailable", "out_of_stock"];
 const OFFICES: Office[] = ["sports_dev", "culture_arts"];
 
 function readString(formData: FormData, key: string): string {

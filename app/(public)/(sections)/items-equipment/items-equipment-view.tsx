@@ -48,12 +48,14 @@ const STATUS_LABELS: Record<ItemStatus, string> = {
   available: "Available",
   borrowed: "Borrowed",
   unavailable: "Unavailable",
+  out_of_stock: "Out of stock",
 };
 
 const STATUS_BADGE_CLASSES: Record<ItemStatus, string> = {
   available: "bg-green-100 text-green-700 hover:bg-green-100",
   borrowed: "bg-amber-100 text-amber-700 hover:bg-amber-100",
   unavailable: "bg-slate-200 text-slate-600 hover:bg-slate-200",
+  out_of_stock: "bg-amber-100 text-amber-700 hover:bg-amber-100",
 };
 
 const CATEGORY_LABELS: Record<ItemCategory, string> = {

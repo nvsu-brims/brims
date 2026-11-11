@@ -8,7 +8,7 @@ import type { Office } from "@/lib/roles";
 // Every function is async, so call sites don't care where the data comes from.
 // ---------------------------------------------------------------------------
 
-export type ItemStatus = "available" | "borrowed" | "unavailable";
+export type ItemStatus = "available" | "borrowed" | "unavailable" | "out_of_stock";
 
 /**
  * The two item categories (MIGRATION_LOGS.md Log 1 FE-6, a DECISION):
