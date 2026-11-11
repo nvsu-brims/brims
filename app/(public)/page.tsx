@@ -62,9 +62,9 @@ export default async function HomePage() {
           <div>
             <div className="mb-4 flex items-center gap-4">
               {/* Logos live in public/: nvsu.png, ucao.png, usdo.png */}
-              <img src="/nvsu.png" alt="Nueva Vizcaya State University logo" className="h-12 w-auto object-contain md:h-14 xl:h-20" />
-              <img src="/ucao.png" alt="University Culture and the Arts Office logo" className="h-12 w-auto object-contain md:h-14 xl:h-20" />
-              <img src="/usdo.png" alt="Sports Development Office logo" className="h-12 w-auto object-contain md:h-14 xl:h-20" />
+              <img src="/nvsu.png" alt="Nueva Vizcaya State University logo" className="h-16 w-auto object-contain xl:h-24" />
+              <img src="/ucao.png" alt="University Culture and the Arts Office logo" className="h-16 w-auto object-contain xl:h-24" />
+              <img src="/usdo.png" alt="Sports Development Office logo" className="h-16 w-auto object-contain xl:h-24" />
             </div>
             <h1 className="mb-3 text-[clamp(1.75rem,4.6vw,2.5rem)] font-bold text-gray-50">
               Welcome to NVSU-BRIMS
