@@ -90,12 +90,14 @@ export function HistoryTable({ history }: HistoryTableProps) {
     {
       key: "borrower",
       header: "Borrower",
-      cell: (row) => row.borrowerName,
-    },
-    {
-      key: "idNumber",
-      header: "ID Number",
-      cell: (row) => row.borrowerIdNumber,
+      cell: (row) => (
+        <div className="min-w-0">
+          <p className="wrap-break-word font-medium">{row.borrowerName}</p>
+          <p className="wrap-break-word text-xs text-muted-foreground">
+            {row.borrowerIdNumber} · {row.college ?? "—"} · {row.organization ?? "—"}
+          </p>
+        </div>
+      ),
     },
     {
       key: "item",
@@ -108,11 +110,6 @@ export function HistoryTable({ history }: HistoryTableProps) {
       key: "quantity",
       header: "Quantity",
       cell: (row) => row.quantity,
-    },
-    {
-      key: "college",
-      header: "College",
-      cell: (row) => row.college ?? "—",
     },
     {
       key: "depositTotal",
