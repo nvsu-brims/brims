@@ -261,7 +261,7 @@ export function StatusBadge({ status, label, fixedWidth }: StatusBadgeProps) {
       style={{ backgroundColor: style.bg, color: style.text }}
       className={cn(
         "inline-block rounded-full px-3 py-1 text-xs",
-        fixedWidth && "w-25 text-center"
+        fixedWidth && "w-40 text-center"
       )}
     >
       {text}
