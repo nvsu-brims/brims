@@ -52,19 +52,22 @@ const CONDITION_LABELS: Record<"good" | "damaged" | "lost", string> = {
 
 export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
   const [sortOrder, setSortOrder] = React.useState<"newest" | "oldest">("newest");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | "awaiting_pickup" | "borrowed" | "overdue">("all");
   const [search, setSearch] = React.useState("");
   // Name search and newest-to-oldest sort (default). Filters the rows shown.
   const visibleRows = React.useMemo(() => {
     const term = search.trim().toLowerCase();
-    const matched = borrowedItems.filter((row) =>
-      (row.borrowerName).toLowerCase().includes(term)
+    const matched = borrowedItems.filter(
+      (row) =>
+        row.borrowerName.toLowerCase().includes(term) &&
+        (statusFilter === "all" || row.status === statusFilter)
     );
     return [...matched].sort((a, b) => {
       const diff =
         new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime();
       return sortOrder === "newest" ? -diff : diff;
     });
-  }, [borrowedItems, search, sortOrder]);
+  }, [borrowedItems, search, sortOrder, statusFilter]);
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
@@ -132,11 +135,12 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
     {
       key: "status",
       header: "Status",
+      className: "min-w-[150px] whitespace-nowrap",
       cell: (row) =>
         row.status === "awaiting_pickup" ? (
-          <StatusBadge status="awaiting_pickup" label="Awaiting pick-up" fixedWidth />
+          <StatusBadge status="awaiting_pickup" label="Awaiting pick-up" />
         ) : (
-          <StatusBadge status={row.status} fixedWidth />
+          <StatusBadge status={row.status} />
         ),
     },
     {
@@ -199,6 +203,18 @@ export function BorrowedItemsTable({ borrowedItems }: BorrowedItemsTableProps) {
 
       <FilterBar
         filters={[
+          {
+            value: statusFilter,
+            onValueChange: (value) => setStatusFilter(value as "all" | "awaiting_pickup" | "borrowed" | "overdue"),
+            options: [
+              { value: "all", label: "All status" },
+              { value: "awaiting_pickup", label: "Awaiting pick-up" },
+              { value: "borrowed", label: "Borrowed" },
+              { value: "overdue", label: "Overdue" },
+            ],
+            placeholder: "All status",
+            widthClassName: "sm:w-48",
+          },
           {
             value: sortOrder,
             onValueChange: (value) => setSortOrder(value as "newest" | "oldest"),
