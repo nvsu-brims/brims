@@ -50,14 +50,14 @@ export default function AboutPage() {
             arts equipment, is tracked here.
           </p>
           <p className="mb-0 text-muted-foreground">
-            NVSU students and staff can browse the available inventory,
-            submit a request to borrow an item, and track that request as
-            it moves from pending to approved by office staff. Once
-            approved, the system keeps a record of the due date so
-            borrowers know exactly when to return the item, and staff can
-            monitor approvals, due dates, and returns from the same
-            dashboard — all without anyone needing to visit each office in
-            person just to check availability.
+            Anyone can browse the available inventory without signing in.
+            NVSU students, staff, and registered organizations can submit a
+            request to borrow an item and track it as it moves from pending
+            to approved by office staff. Once approved, the system keeps a
+            record of the due date so borrowers know exactly when to return
+            the item, and staff can monitor approvals, due dates, and
+            returns from the same dashboard — all without anyone needing to
+            visit each office in person just to check availability.
           </p>
         </CardContent>
       </Card>
