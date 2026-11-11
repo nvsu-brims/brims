@@ -746,35 +746,40 @@ export async function approveBorrowRequest(
   // conditional update only succeeds while enough units are free, so two
   // approvals for the last units can't both go through. If either step fails,
   // both are rolled back.
-  try {
-    await db.$transaction(async (tx) => {
-      const taken = await tx.inventoryItem.updateMany({
-        where: {
-          id: record.itemId,
-          status: "available",
-          availableQuantity: { gte: record.quantity },
-        },
-        data: { availableQuantity: { decrement: record.quantity } },
-      });
-      if (taken.count === 0) {
-        throw new ApproveAbort(
-          `Not enough units are free for this request (it needs ${record.quantity}).`
-        );
-      }
-      const updated = await tx.borrowRecord.updateMany({
-        where: { id: requestId, status: "pending" },
-        data: {
-          status: "awaiting_pickup",
-          approvedAt: new Date().toISOString(),
-          approvedById: adminId,
-          dueAt,
-        },
-      });
-      if (updated.count === 0) throw new ApproveAbort(NO_LONGER_PENDING);
+  // Approval without an interactive transaction (which the Supabase pooler
+  // can reject). Step 1 takes the units only while enough are free; step 2
+  // marks the request approved only while it is still pending. If step 2
+  // finds the request no longer pending, step 1 is undone.
+  const taken = await db.inventoryItem.updateMany({
+    where: {
+      id: record.itemId,
+      status: "available",
+      availableQuantity: { gte: record.quantity },
+    },
+    data: { availableQuantity: { decrement: record.quantity } },
+  });
+  if (taken.count === 0) {
+    return {
+      ok: false,
+      error: `Not enough units are free for this request (it needs ${record.quantity}).`,
+    };
+  }
+
+  const updated = await db.borrowRecord.updateMany({
+    where: { id: requestId, status: "pending" },
+    data: {
+      status: "awaiting_pickup",
+      approvedAt: new Date().toISOString(),
+      approvedById: adminId,
+      dueAt,
+    },
+  });
+  if (updated.count === 0) {
+    await db.inventoryItem.updateMany({
+      where: { id: record.itemId },
+      data: { availableQuantity: { increment: record.quantity } },
     });
-  } catch (error) {
-    if (error instanceof ApproveAbort) return { ok: false, error: error.message };
-    throw error;
+    return { ok: false, error: NO_LONGER_PENDING };
   }
 
   return {
