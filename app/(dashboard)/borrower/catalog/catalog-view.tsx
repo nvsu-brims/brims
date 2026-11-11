@@ -503,8 +503,8 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               role="note"
               className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900"
             >
-              Requires admin approval before pickup. Late return, damage, or loss
-              may result in fines. Pay the cash deposit in person at pickup. Deposits are refunded once the item is returned.
+              Admin approval required. Cancelled if not picked up on the pick-up date.
+              Late return, damage, or loss may incur fines. Deposits are paid in person and refunded on return.
             </div>
 
             <div className="mt-6 flex items-start gap-3">
