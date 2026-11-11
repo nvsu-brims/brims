@@ -102,22 +102,18 @@ export function HistoryTable({ history }: HistoryTableProps) {
     {
       key: "item",
       header: "Item",
-      cell: (row) => row.itemName,
-      title: (row) => row.itemName,
-      className: "md:max-w-[220px] md:truncate",
-    },
-    {
-      key: "quantity",
-      header: "Quantity",
-      cell: (row) => row.quantity,
-    },
-    {
-      key: "depositTotal",
-      header: "Cash Deposit",
-      cell: (row) =>
-        row.depositTotal == null
-          ? "—"
-          : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(row.depositTotal),
+      className: "wrap-break-word whitespace-normal md:max-w-[240px]",
+      cell: (row) => (
+        <div className="min-w-0">
+          <p className="wrap-break-word font-medium">{row.itemName}</p>
+          <p className="text-xs text-muted-foreground">
+            Qty {row.quantity} ·{" "}
+            {row.depositTotal == null
+              ? "No deposit"
+              : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(row.depositTotal)}
+          </p>
+        </div>
+      ),
     },
     {
       key: "status",
