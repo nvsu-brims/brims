@@ -617,7 +617,7 @@ export async function getBorrowedItems(
     where: { status: "overdue" },
   });
 
-  const rows = await hydrateAdminRows([...borrowed, ...overdue]);
+  const rows = await hydrateAdminRows([...awaiting, ...borrowed, ...overdue]);
   const scoped = office ? rows.filter((row) => row.itemOffice === office) : rows;
 
   // Soonest due first; a row with no due date sorts last.
@@ -634,7 +634,7 @@ export async function getBorrowedItems(
 export async function getBorrowHistory(
   office: Office | null = null
 ): Promise<AdminBorrowRow[]> {
-  const excluded = new Set(["pending", "borrowed", "overdue"]);
+  const excluded = new Set(["pending", "awaiting_pickup", "borrowed", "overdue"]);
   const records = await db.borrowRecord.findMany({
     orderBy: { requestedAt: "desc" },
   });
