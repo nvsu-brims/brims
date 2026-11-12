@@ -59,8 +59,8 @@ const STATUS_BADGE_CLASSES: Record<ItemStatus, string> = {
 };
 
 const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  sports_dev_items_equipment: "SDO Items & Equipment",
-  culture_arts_items_equipment: "UCAO Items & Equipment",
+  sports_dev_items_equipment: "USDO Equipment",
+  culture_arts_items_equipment: "UCAO Items",
 };
 
 // Trigger-display labels, including the "all" option — passed explicitly
@@ -225,7 +225,7 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
                 </SelectValue>
               </SelectTrigger>
               {/* Bound to the trigger's own width (sm:w-60 above) — now that
-                  the labels are short ("SDO Items & Equipment", "UCAO
+                  the labels are short ("USDO Equipment", "UCAO
                   Items & Equipment"), that width is enough to show each
                   option in full without clipping. */}
               <SelectContent

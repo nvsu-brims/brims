@@ -29,13 +29,13 @@ async function getItemStats() {
 
 // BUG-18 fix: these badges used to be their own hardcoded copy ("Sports
 // Items & Equipment" / "Performing Arts Items & Equipment"), which drifted
-// from the catalog's real labels ("SDO Items & Equipment" / "UCAO Items &
+// from the catalog's real labels ("USDO Equipment" / "UCAO Items &
 // Equipment", from CATEGORY_LABELS in the catalog views). Deriving the list
 // from the same ItemCategory union the catalog uses means there is one
 // source of truth and this can't go stale again.
 const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  sports_dev_items_equipment: "SDO Items & Equipment",
-  culture_arts_items_equipment: "UCAO Items & Equipment",
+  sports_dev_items_equipment: "USDO Equipment",
+  culture_arts_items_equipment: "UCAO Items",
 };
 
 const CATEGORIES = Object.values(CATEGORY_LABELS);

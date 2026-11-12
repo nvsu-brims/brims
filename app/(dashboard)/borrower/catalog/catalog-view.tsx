@@ -257,11 +257,11 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
               { value: "all", label: "All Categories" },
               {
                 value: "sports_dev_items_equipment",
-                label: "SDO Items & Equipment",
+                label: "USDO Equipment",
               },
               {
                 value: "culture_arts_items_equipment",
-                label: "UCAO Items & Equipment",
+                label: "UCAO Items",
               },
             ],
             placeholder: "All Categories",

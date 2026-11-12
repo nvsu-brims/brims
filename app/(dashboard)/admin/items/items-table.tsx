@@ -101,8 +101,8 @@ const STATUS_LABELS: Record<ItemStatus, string> = {
 };
 
 const CATEGORY_LABELS: Record<ItemCategory, string> = {
-  sports_dev_items_equipment: "SDO Items & Equipment",
-  culture_arts_items_equipment: "UCAO Items & Equipment",
+  sports_dev_items_equipment: "USDO Equipment",
+  culture_arts_items_equipment: "UCAO Items",
 };
 
 const OFFICE_LABELS: Record<ItemOffice, string> = {
@@ -521,11 +521,11 @@ export function ItemsTable({
               { value: "all", label: "All Categories" },
               {
                 value: "sports_dev_items_equipment",
-                label: "SDO Items & Equipment",
+                label: "USDO Equipment",
               },
               {
                 value: "culture_arts_items_equipment",
-                label: "UCAO Items & Equipment",
+                label: "UCAO Items",
               },
             ],
             placeholder: "All Categories",
@@ -634,8 +634,8 @@ export function ItemsTable({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Category is not chosen separately: it follows the office
-                  (SDO office -> "SDO Items & Equipment", UCAO office ->
-                  "UCAO Items & Equipment"; see lib/repositories/inventory.ts),
+                  (SDO office -> "USDO Equipment", UCAO office ->
+                  "UCAO Items"; see lib/repositories/inventory.ts),
                   so it is shown read-only instead of as a control that
                   would not change what is saved. */}
               <FormField label="Category">
