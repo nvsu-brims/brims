@@ -168,7 +168,7 @@ function toRoleSelectValue(role: UserRole, office: AdminOffice | null): RoleSele
 }
 
 /** What the table's Role column and the View dialog show: "Borrower" as
- *  before, or the admin's specific type ("Super Admin" / "SDO Admin" /
+ *  before, or the admin's specific type ("Super Admin" / "USDO Admin" /
  *  "UCAO Admin") instead of a flat "Admin" — so the three admin kinds are
  *  distinguishable without opening the row. */
 function roleDisplayLabel(role: UserRole, office: AdminOffice | null): string {

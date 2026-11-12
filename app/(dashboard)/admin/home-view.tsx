@@ -56,7 +56,7 @@ import {
 // page's queries, so nothing here filters by office.
 //
 // The Welcome greeting reads the session: the admin type label ("Super Admin",
-// "SDO Admin", "UCAO Admin"). That is a deliberate change from the PHP, which
+// "USDO Admin", "UCAO Admin"). That is a deliberate change from the PHP, which
 // greeted the admin by full name.
 //
 // Approve / Reject on the two lists (FE-38, closed):
