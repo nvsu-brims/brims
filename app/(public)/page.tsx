@@ -140,7 +140,7 @@ export default async function HomePage() {
                 </div>
                 <div>
                   <p className="mb-1 text-sm font-semibold text-gray-50">
-                    Need help? Visit SDO or UCAO
+                    Need help? Visit USDO or UCAO
                   </p>
                   <p className="mb-0 text-sm text-white/80">
                     Mon–Fri, 8:00 AM–12:00 PM &amp; 1:00 PM–5:00 PM
