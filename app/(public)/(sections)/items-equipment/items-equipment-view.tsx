@@ -145,8 +145,9 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
           Available Items &amp; Equipment
         </h2>
         <p className="mb-0 text-muted-foreground">
-          Browse the available items and equipment from the Sports
-          Development Office and the University Culture and the Arts Office.
+          Browse the available items and equipment from the University
+          Culture and the Arts Office and University Sports and Development
+          Office.
         </p>
       </div>
 
