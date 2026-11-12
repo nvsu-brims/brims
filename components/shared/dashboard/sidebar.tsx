@@ -127,7 +127,7 @@ export function DashboardSidebar({
   const [signOutOpen, setSignOutOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
   // The footer shows profile.displayName when set (admins: "Super Admin" /
-  // "SDO Admin" / "UCAO Admin"); otherwise the real full name.
+  // "USDO Admin" / "UCAO Admin"); otherwise the real full name.
   const fullName =
     profile.displayName ?? `${profile.firstName} ${profile.lastName}`.trim();
 

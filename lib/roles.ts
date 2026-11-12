@@ -24,10 +24,10 @@ export const OFFICE_LABELS: Record<Office, string> = {
   culture_arts: "University Culture & the Arts Office",
 };
 
-/** Label shown in the dashboard greeting: "Welcome, SDO Admin". */
+/** Label shown in the dashboard greeting: "Welcome, USDO Admin". */
 export const ADMIN_TYPE_LABELS: Record<AdminType, string> = {
   super: "Super Admin",
-  sdo: "SDO Admin",
+  sdo: "USDO Admin",
   ucao: "UCAO Admin",
 };
 
