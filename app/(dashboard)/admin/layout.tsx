@@ -24,7 +24,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/shared/dashboard/header";
 import type { DashboardProfileInfo } from "@/components/shared/dashboard/profile-dialog";
 import { signOutAction } from "@/app/(public)/sign-out/actions";
-import { getAdminLabel, isSuperAdmin, OFFICE_LABELS } from "@/lib/roles";
+import { getAdminLabel, isSuperAdmin, OFFICE_ACRONYMS } from "@/lib/roles";
 import { PENDING_COUNTS_CHANGED_EVENT } from "@/lib/pending-counts";
 import type { SessionUser } from "@/lib/session";
 
@@ -121,7 +121,7 @@ function buildAdminProfile(
     email: user.email ?? "—",
     contactNumber: user.contactNumber ?? "—",
     middleFields: user.office
-      ? [{ label: "Office", value: OFFICE_LABELS[user.office] }]
+      ? [{ label: "Office", value: OFFICE_ACRONYMS[user.office] }]
       : [],
     memberSince: user.createdAt,
     lastPasswordChangeAt,

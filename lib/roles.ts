@@ -24,6 +24,12 @@ export const OFFICE_LABELS: Record<Office, string> = {
   culture_arts: "University Culture & the Arts Office",
 };
 
+/** Short office names, shown where the full name would take too much room. */
+export const OFFICE_ACRONYMS: Record<Office, string> = {
+  sports_dev: "USDO",
+  culture_arts: "UCAO",
+};
+
 /** Label shown in the dashboard greeting: "Welcome, USDO Admin". */
 export const ADMIN_TYPE_LABELS: Record<AdminType, string> = {
   super: "Super Admin",
