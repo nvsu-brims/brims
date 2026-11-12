@@ -80,7 +80,7 @@ const TERMS_SECTIONS: { title: string; body: string }[] = [
   { title: "Damage and loss", body: "Report any damage or loss to the office that issued the item as soon as you notice it. You may be charged for repair or replacement." },
   { title: "Fines", body: "Late return, damage, or loss may result in fines, set by the university's policy. Fines are not calculated by this system." },
   { title: "Personal data", body: "Your information is handled as described in the Data Privacy Notice shown at sign-up." },
-  { title: "Changes", body: "The Sports Development Office (SDO) and the University Culture and the Arts Office (UCAO) may update these terms. Continued use after an update means you accept the new terms." },
+  { title: "Changes", body: "The University Sports & Development Office (SDO) and the University Culture and the Arts Office (UCAO) may update these terms. Continued use after an update means you accept the new terms." },
 ];
 
 /** A list row plus whether THIS borrower already has a pending request on it. */

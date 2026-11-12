@@ -41,7 +41,7 @@ export default function AboutPage() {
           </h3>
           <p className="mb-3 text-muted-foreground">
             NVSU-BRIMS is the official platform for borrowing and returning
-            items and equipment from the Sports Development Office and the
+            items and equipment from the University Sports & Development Office and the
             University Culture and the Arts Office — Nueva Vizcaya State
             University Borrowing and Returning Items &amp; Equipment
             Management System. It was built to replace scattered logbooks

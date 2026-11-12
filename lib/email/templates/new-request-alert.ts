@@ -11,7 +11,7 @@ export interface NewRequestAlertData {
   /** The borrower's full name. */
   requesterName: string;
   itemName: string;
-  /** Full office name, e.g. "Sports Development Office". */
+  /** Full office name, e.g. "University Sports & Development Office". */
   officeName: string;
   /** Long date the borrower asked to return the item, e.g. "October 1, 2026". */
   dueDate: string;

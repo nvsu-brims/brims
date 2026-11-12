@@ -12,7 +12,7 @@ import { renderEmail, type EmailContent } from "@/lib/email/templates/layout";
 export interface RequestApprovedData {
   firstName: string;
   itemName: string;
-  /** Full office name, e.g. "Sports Development Office". */
+  /** Full office name, e.g. "University Sports & Development Office". */
   officeName: string;
   /** Long date, e.g. "October 1, 2026". */
   dueDate: string;

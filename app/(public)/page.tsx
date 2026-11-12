@@ -64,14 +64,14 @@ export default async function HomePage() {
               {/* Logos live in public/: nvsu.png, ucao.png, usdo.png */}
               <img src="/nvsu.png" alt="Nueva Vizcaya State University logo" className="h-16 w-auto object-contain xl:h-24" />
               <img src="/ucao.png" alt="University Culture and the Arts Office logo" className="h-16 w-auto object-contain xl:h-24" />
-              <img src="/usdo.png" alt="Sports Development Office logo" className="h-16 w-auto object-contain xl:h-24" />
+              <img src="/usdo.png" alt="University Sports & Development Office logo" className="h-16 w-auto object-contain xl:h-24" />
             </div>
             <h1 className="mb-3 text-[clamp(1.75rem,4.6vw,2.5rem)] font-bold text-gray-50">
               Welcome to NVSU-BRIMS
             </h1>
             <p className="mb-8 max-w-[46ch] text-[clamp(0.9rem,1.85vw,1.05rem)] text-white/85">
               The official platform for borrowing and returning items and
-              equipment from the Sports Development Office and the
+              equipment from the University Sports & Development Office and the
               University Culture and the Arts Office — Nueva Vizcaya State
               University Borrowing and Returning Items &amp; Equipment
               Management System.

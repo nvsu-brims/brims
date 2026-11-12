@@ -105,7 +105,7 @@ const SAMPLES: Record<EmailKind, () => EmailContent> = {
     buildRequestApprovedEmail({
       firstName: "Juan",
       itemName: "Projector",
-      officeName: "Sports Development Office",
+      officeName: "University Sports & Development Office",
       dueDate: "October 10, 2026",
       borrowedItemsUrl: `${BASE}/borrower/borrowed-items`,
     }),
@@ -128,7 +128,7 @@ const SAMPLES: Record<EmailKind, () => EmailContent> = {
     buildDailyUnreturnedEmail({
       firstName: "Juan",
       itemName: "Projector",
-      officeName: "Sports Development Office",
+      officeName: "University Sports & Development Office",
       dueDate: "October 1, 2026",
       daysOverdue: 3,
       borrowedItemsUrl: `${BASE}/borrower/borrowed-items`,
@@ -145,7 +145,7 @@ const SAMPLES: Record<EmailKind, () => EmailContent> = {
       adminFirstName: "Maria",
       requesterName: "Juan Dela Cruz",
       itemName: "Projector",
-      officeName: "Sports Development Office",
+      officeName: "University Sports & Development Office",
       dueDate: "October 10, 2026",
       requestsUrl: `${BASE}/admin/requests`,
     }),

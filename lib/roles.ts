@@ -20,7 +20,7 @@ export function getAdminType(office: Office | null): AdminType {
 
 /** Full office names, e.g. for the scoped admin's profile "Office" field. */
 export const OFFICE_LABELS: Record<Office, string> = {
-  sports_dev: "Sports Development Office",
+  sports_dev: "University Sports & Development Office",
   culture_arts: "University Culture & the Arts Office",
 };
 

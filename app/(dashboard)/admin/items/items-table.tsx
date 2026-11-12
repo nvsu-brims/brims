@@ -106,7 +106,7 @@ const CATEGORY_LABELS: Record<ItemCategory, string> = {
 };
 
 const OFFICE_LABELS: Record<ItemOffice, string> = {
-  sports_dev: "Sports Development Office",
+  sports_dev: "University Sports & Development Office",
   culture_arts: "University Culture & the Arts Office",
 };
 
@@ -665,7 +665,7 @@ export function ItemsTable({
                       style={{ width: "var(--anchor-width)" }}
                     >
                       <SelectItem value="sports_dev">
-                        Sports Development Office
+                        University Sports & Development Office
                       </SelectItem>
                       <SelectItem value="culture_arts">
                         University Culture &amp; the Arts Office

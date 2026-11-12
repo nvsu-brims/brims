@@ -20,7 +20,7 @@ export type ExportHistoryResult =
   | { ok: false; error: string };
 
 const OFFICE_NAMES: Record<"sports_dev" | "culture_arts", string> = {
-  sports_dev: "Sports Development Office",
+  sports_dev: "University Sports & Development Office",
   culture_arts: "University Culture and the Arts Office",
 };
 
