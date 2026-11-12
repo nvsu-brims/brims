@@ -239,11 +239,11 @@ export function ItemsEquipmentView({ items }: { items: InventoryListItem[] }) {
                 onMouseLeave={categoryHover.onMouseLeave}
               >
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="sports_dev_items_equipment">
-                  SDO Items &amp; Equipment
-                </SelectItem>
                 <SelectItem value="culture_arts_items_equipment">
-                  UCAO Items &amp; Equipment
+                  UCAO Items
+                </SelectItem>
+                <SelectItem value="sports_dev_items_equipment">
+                  USDO Equipment
                 </SelectItem>
               </SelectContent>
             </Select>

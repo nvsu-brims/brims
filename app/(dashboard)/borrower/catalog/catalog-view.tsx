@@ -256,12 +256,12 @@ export function CatalogView({ items }: { items: CatalogItem[] }) {
             options: [
               { value: "all", label: "All Categories" },
               {
-                value: "sports_dev_items_equipment",
-                label: "USDO Equipment",
-              },
-              {
                 value: "culture_arts_items_equipment",
                 label: "UCAO Items",
+              },
+              {
+                value: "sports_dev_items_equipment",
+                label: "USDO Equipment",
               },
             ],
             placeholder: "All Categories",
