@@ -34,6 +34,7 @@ import {
 } from "@/components/shared/dashboard/form-field";
 import { cn } from "@/lib/utils";
 import type { Office } from "@/lib/roles";
+import { OFFICE_ACRONYMS } from "@/lib/roles";
 import type {
   InventoryListItem,
   ItemCategory,
@@ -430,7 +431,7 @@ export function ItemsTable({
           {
             key: "office",
             header: "Office",
-            cell: (row: InventoryListItem) => OFFICE_LABELS[row.office],
+            cell: (row: InventoryListItem) => OFFICE_ACRONYMS[row.office],
           },
         ]
       : []),
