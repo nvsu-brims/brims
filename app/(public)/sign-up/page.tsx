@@ -465,19 +465,22 @@ export default function SignUpPage() {
         </div>
 
         <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
-          <DialogContent className="border-gray-200 bg-gray-50 p-8 text-green-900 sm:max-w-lg">
-            <DialogHeader>
+          <DialogContent className="border-2 border-gray-300 bg-gray-50 p-0 text-green-900 sm:max-w-lg">
+            <DialogHeader className="border-b border-gray-300 px-8 py-5">
               <DialogTitle className="text-green-900">Data Privacy Notice</DialogTitle>
               <DialogDescription className="sr-only">
                 How NVSU-BRIMS collects and uses your personal information.
               </DialogDescription>
             </DialogHeader>
-            <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2 text-sm leading-relaxed text-gray-700">
+            <div className="max-h-[60vh] space-y-4 overflow-y-auto px-8 py-5 text-sm leading-relaxed text-gray-700">
               {PRIVACY_NOTICE_PARAGRAPHS.map((paragraph) => (
                 <p key={paragraph} className="mb-0">
                   {paragraph}
                 </p>
               ))}
+            </div>
+            <div className="border-t border-gray-300 px-8 py-4 text-sm text-gray-600">
+              Last updated: Version 1.0, November 7, 2026
             </div>
           </DialogContent>
         </Dialog>
