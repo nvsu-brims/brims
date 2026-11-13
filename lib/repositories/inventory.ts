@@ -197,6 +197,8 @@ export interface ItemChanges {
   quantity?: number;
   /** Cash deposit per unit, PHP (min 200.00). */
   cashDeposit: number;
+  /** Description; omitted keeps the current one. */
+  description?: string | null;
   /** Only set when a NEW picture was uploaded; undefined keeps the old one. */
   imageUrl?: string | null;
 }
@@ -260,9 +262,11 @@ export async function updateItem(
     quantity?: number;
     availableQuantity?: number;
     cashDeposit: number;
+    description?: string | null;
   } = {
     name: changes.name,
     cashDeposit: changes.cashDeposit,
+    ...(changes.description !== undefined ? { description: changes.description } : {}),
     status: changes.status,
   };
   if (changes.imageUrl !== undefined) data.image = changes.imageUrl;

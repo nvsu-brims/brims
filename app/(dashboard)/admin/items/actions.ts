@@ -185,7 +185,14 @@ export async function editItemAction(formData: FormData): Promise<ItemActionResu
 
   const result = await updateItem(
     id,
-    { name, status, quantity, cashDeposit, ...(newImageUrl ? { imageUrl: newImageUrl } : {}) },
+    {
+      name,
+      status,
+      quantity,
+      cashDeposit,
+      description: readString(formData, "description").trim() || null,
+      ...(newImageUrl ? { imageUrl: newImageUrl } : {}),
+    },
     caller.office
   );
   if (!result.ok) {

@@ -303,6 +303,7 @@ export function ItemsTable({
   const [editStatus, setEditStatus] = React.useState<ItemStatus>("available");
   const [editQuantity, setEditQuantity] = React.useState("1");
   const [editDeposit, setEditDeposit] = React.useState("");
+  const [editDescription, setEditDescription] = React.useState("");
   const [editPicture, setEditPicture] = React.useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = React.useState<string | null>(
     null,
@@ -325,6 +326,7 @@ export function ItemsTable({
     setDialogError(null);
     setEditQuantity(String(row.quantity));
     setEditDeposit(row.cashDeposit != null ? String(row.cashDeposit) : "");
+    setEditDescription(row.description ?? "");
     setEditTarget(row);
   }
 
@@ -370,6 +372,7 @@ export function ItemsTable({
     formData.set("status", editStatus);
     formData.set("quantity", editQuantity);
     formData.set("cashDeposit", editDeposit);
+    formData.set("description", editDescription);
     if (editPicture) formData.set("picture", editPicture);
     run(
       () => editItemAction(formData),
@@ -782,7 +785,7 @@ export function ItemsTable({
           if (!open) setEditTarget(null);
         }}
         title="Edit Item"
-        size="sm"
+        size="lg"
         footer={
           <div className="flex items-center justify-end gap-2 px-5 py-4">
             <Button
@@ -805,12 +808,9 @@ export function ItemsTable({
         }
       >
         <form id="edit-item-form" onSubmit={handleEditSubmit}>
-          <div className="space-y-4 px-5 py-4">
+          <div className="grid grid-cols-1 gap-4 px-5 py-4 sm:grid-cols-2">
             {dialogError && (
-              <p
-                role="alert"
-                className="mb-0 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
-              >
+              <p role="alert" className="mb-0 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2">
                 {dialogError}
               </p>
             )}
@@ -824,6 +824,7 @@ export function ItemsTable({
                 required
               />
             </FormField>
+
 
             <FormField label="Status">
               <Select
@@ -849,7 +850,7 @@ export function ItemsTable({
               </Select>
             </FormField>
 
-            <div className="sm:col-span-2">
+
               <FormField label="Cash Deposit (PHP)" htmlFor="editCashDeposit">
                 <Input
                   id="editCashDeposit"
@@ -863,7 +864,6 @@ export function ItemsTable({
                   className={cn("w-full bg-white", FIELD_FOCUS_RING_CLASSES)}
                 />
               </FormField>
-            </div>
 
             <FormField label="Item Quantity" htmlFor="editItemQuantity">
               <Input
@@ -877,6 +877,8 @@ export function ItemsTable({
               />
             </FormField>
 
+
+            <div className="sm:col-span-2">
             <FormField label="Item Picture" htmlFor="editPictureInput">
               <div className="flex items-center gap-2">
                 <label
@@ -919,6 +921,19 @@ export function ItemsTable({
                 Leave empty to keep the current picture.
               </p>
             </FormField>
+            </div>
+
+            <div className="sm:col-span-2">
+              <FormField label="Description" htmlFor="editDescription">
+                <textarea
+                  id="editDescription"
+                  rows={3}
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                  className={cn("w-full rounded-md border border-input bg-white px-3 py-2 text-sm", FIELD_FOCUS_RING_CLASSES)}
+                />
+              </FormField>
+            </div>
           </div>
         </form>
       </FormDialogShell>
